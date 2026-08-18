@@ -1,0 +1,11 @@
+item,result
+Prediction task,Predict whether the next wafer will violate the Shewhart SPC limits
+Prediction horizon,1 wafer ahead
+Validation,Leave-One-Lot-Out (LOLO)
+Risk threshold,0.50
+Pre-alarm sample count,29
+Pre-alarm recall,66.7%
+Pre-alarm precision,50.0%
+False warning rate,30.0%
+First SPC alarm events,8
+First SPC alarms warned one wafer ahead,5/8 (62.5%)

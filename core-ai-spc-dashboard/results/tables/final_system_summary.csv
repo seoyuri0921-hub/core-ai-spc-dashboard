@@ -1,0 +1,11 @@
+metric,value
+total_next_wafer_pairs,56.0
+prediction_horizon_wafers,1.0
+observed_first_spc_alarm_events,8.0
+first_spc_alarm_warned_one_step_ahead,5.0
+first_spc_alarm_one_step_warning_rate,0.625
+pre_alarm_true_warnings,6.0
+pre_alarm_false_warnings,6.0
+pre_alarm_missed_warnings,3.0
+pre_alarm_correct_normals,14.0
+risk_threshold,0.5

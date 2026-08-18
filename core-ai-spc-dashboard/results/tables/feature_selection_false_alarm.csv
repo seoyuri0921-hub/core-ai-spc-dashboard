@@ -1,0 +1,6 @@
+feature_set,pre_alarm_normal_cases,false_alarms,false_alarm_rate
+History+AllProcess,20,6,0.3
+History+Top10,20,6,0.3
+History+Top15,20,7,0.35
+History+Top5,20,7,0.35
+History-only,20,6,0.3

@@ -1,0 +1,11 @@
+lot_number,conditioning_count,conditioning_surface,first_warning_issued_at_wafer,first_warning_target_wafer,first_spc_alarm_wafer,warning_issue_to_first_spc_index_gap,prediction_horizon_wafers,caught_first_spc_alarm_one_step_ahead,early_warning_count,true_early_warning_count,false_early_warning_count
+1,3,Chuck,3.0,4.0,5.0,2.0,1,True,2,1,1
+2,1,Chuck,,,4.0,,1,False,0,0,0
+3,9,Chuck,5.0,6.0,7.0,2.0,1,True,2,1,1
+4,3,Si,,,6.0,,1,False,0,0,0
+5,1,Si,3.0,4.0,4.0,1.0,1,True,2,2,0
+6,9,Si,,,6.0,,1,False,0,0,0
+7,3,SiO2,5.0,6.0,,,1,False,1,0,1
+8,3,SiO2,5.0,6.0,10.0,5.0,1,True,4,1,3
+9,3,Chuck,5.0,6.0,6.0,1.0,1,True,1,1,0
+10,3,SiO2,,,,,1,False,0,0,0
