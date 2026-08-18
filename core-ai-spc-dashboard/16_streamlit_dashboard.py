@@ -1,3 +1,23 @@
+# ============================================================
+# 16_streamlit_dashboard.py
+#
+# AI-SPC Process Monitor
+#
+# Simplified exhibition version
+#
+# Main concept:
+#
+# Current wafer
+#      ↓
+# Conventional SPC status
+#      ↓
+# AI predicts NEXT wafer risk
+#      ↓
+# Engineer review
+#
+# ============================================================
+
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -20,15 +40,53 @@ st.set_page_config(
 
 # ============================================================
 # 1. PATH
+#
+# Supports BOTH:
+#
+# Local:
+# core_drift_ai/
+#   app/
+#     16_streamlit_dashboard.py
+#   results/
+#
+# Cloud / alternative:
+# folder/
+#   16_streamlit_dashboard.py
+#   results/
+#
 # ============================================================
 
-BASE_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR = Path(__file__).resolve().parent
+
+
+if (
+    SCRIPT_DIR
+    / "results"
+    / "tables"
+).exists():
+
+    BASE_DIR = SCRIPT_DIR
+
+elif (
+    SCRIPT_DIR.parent
+    / "results"
+    / "tables"
+).exists():
+
+    BASE_DIR = SCRIPT_DIR.parent
+
+else:
+
+    # fallback
+    BASE_DIR = SCRIPT_DIR
+
 
 TABLE_DIR = (
     BASE_DIR
     / "results"
     / "tables"
 )
+
 
 SYSTEM_FILE = (
     TABLE_DIR
@@ -56,184 +114,209 @@ PROCESS_IMPORTANCE_FILE = (
 )
 
 
+# Optional validation files
+BASELINE_VALIDATION_FILE = (
+    TABLE_DIR
+    / "baseline_sensitivity_summary.csv"
+)
+
+MODEL_COMPARISON_FILE = (
+    TABLE_DIR
+    / "model_comparison_summary.csv"
+)
+
+
 # ============================================================
-# 2. CUSTOM CSS
+# 2. CSS
 # ============================================================
 
 st.markdown(
     """
 <style>
 
-/* ----------------------------------------------------------
-   전체 폭
----------------------------------------------------------- */
-
 .block-container {
-    padding-top: 2rem;
+    padding-top: 1.5rem;
     padding-bottom: 3rem;
-    max-width: 1500px;
+    max-width: 1450px;
 }
 
 
-/* ----------------------------------------------------------
-   타이틀
----------------------------------------------------------- */
+/* ==========================================================
+   Header
+========================================================== */
 
 .main-title {
-    font-size: 2.6rem;
-    font-weight: 800;
-    margin-bottom: 0.1rem;
-    color: #1f2937;
+    font-size: 2.55rem;
+    font-weight: 850;
+    color: #111827;
+    margin-bottom: 0.15rem;
 }
 
 .sub-title {
-    color: #6b7280;
     font-size: 1.05rem;
-    margin-bottom: 1.8rem;
-}
-
-
-/* ----------------------------------------------------------
-   카드
----------------------------------------------------------- */
-
-.monitor-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    padding: 1.3rem 1.4rem;
-    background-color: #ffffff;
-    min-height: 205px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.card-title {
-    font-size: 0.92rem;
     color: #6b7280;
-    font-weight: 600;
-    margin-bottom: 0.45rem;
+    margin-bottom: 1.5rem;
 }
 
-.card-main {
-    font-size: 2rem;
+
+/* ==========================================================
+   Simple step cards
+========================================================== */
+
+.step-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    padding: 1.35rem 1.45rem;
+    min-height: 220px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.step-number {
+    font-size: 0.83rem;
+    color: #6b7280;
+    font-weight: 750;
+    margin-bottom: 0.5rem;
+}
+
+.step-title {
+    font-size: 1.15rem;
     font-weight: 800;
-    color: #111827;
-    line-height: 1.15;
-    margin-bottom: 0.8rem;
+    color: #1f2937;
+    margin-bottom: 0.75rem;
 }
 
-.card-sub {
-    font-size: 0.98rem;
-    color: #374151;
+.big-status {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #111827;
+    margin-top: 0.45rem;
+    margin-bottom: 0.65rem;
+}
+
+.big-risk {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #111827;
+    line-height: 1;
+    margin-top: 0.4rem;
+    margin-bottom: 0.7rem;
+}
+
+.small-description {
+    color: #4b5563;
+    font-size: 0.96rem;
     line-height: 1.55;
 }
 
-.card-caption {
-    color: #9ca3af;
-    font-size: 0.85rem;
-    margin-top: 0.6rem;
-}
 
-
-/* ----------------------------------------------------------
-   상태 badge
----------------------------------------------------------- */
+/* ==========================================================
+   Badges
+========================================================== */
 
 .badge-normal {
     display: inline-block;
-    padding: 0.45rem 0.85rem;
+    padding: 0.45rem 0.9rem;
     border-radius: 999px;
-    background-color: #dcfce7;
+    background: #dcfce7;
     color: #166534;
-    font-weight: 700;
-    font-size: 1rem;
+    font-weight: 800;
 }
 
 .badge-warning {
     display: inline-block;
-    padding: 0.45rem 0.85rem;
+    padding: 0.45rem 0.9rem;
     border-radius: 999px;
-    background-color: #ffedd5;
+    background: #ffedd5;
     color: #c2410c;
-    font-weight: 700;
-    font-size: 1rem;
+    font-weight: 800;
 }
 
 .badge-alarm {
     display: inline-block;
-    padding: 0.45rem 0.85rem;
+    padding: 0.45rem 0.9rem;
     border-radius: 999px;
-    background-color: #fee2e2;
+    background: #fee2e2;
     color: #b91c1c;
-    font-weight: 700;
-    font-size: 1rem;
-}
-
-
-/* ----------------------------------------------------------
-   SHAP contributor 카드
----------------------------------------------------------- */
-
-.shap-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 1rem 1.1rem;
-    min-height: 150px;
-    background-color: #f9fafb;
-}
-
-.shap-rank {
-    font-size: 0.85rem;
     font-weight: 800;
-    color: #6b7280;
-}
-
-.shap-name {
-    font-size: 1.02rem;
-    font-weight: 700;
-    margin-top: 0.25rem;
-    margin-bottom: 0.6rem;
-    color: #1f2937;
-}
-
-.shap-value {
-    font-size: 0.92rem;
-    color: #4b5563;
-    margin-bottom: 0.25rem;
 }
 
 
-/* ----------------------------------------------------------
-   섹션 제목
----------------------------------------------------------- */
+/* ==========================================================
+   Section
+========================================================== */
 
 .section-title {
     font-size: 1.45rem;
+    font-weight: 850;
+    color: #111827;
+    margin-top: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+
+/* ==========================================================
+   Result boxes
+========================================================== */
+
+.result-success {
+    border: 1px solid #bbf7d0;
+    background: #f0fdf4;
+    border-radius: 15px;
+    padding: 1.2rem;
+    font-size: 1.05rem;
+}
+
+.result-warning {
+    border: 1px solid #fed7aa;
+    background: #fff7ed;
+    border-radius: 15px;
+    padding: 1.2rem;
+    font-size: 1.05rem;
+}
+
+.result-error {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    border-radius: 15px;
+    padding: 1.2rem;
+    font-size: 1.05rem;
+}
+
+
+/* ==========================================================
+   Contributor card
+========================================================== */
+
+.contributor-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 13px;
+    padding: 1rem;
+    background: #f9fafb;
+    min-height: 145px;
+}
+
+.contributor-rank {
+    color: #6b7280;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.contributor-name {
+    margin-top: 0.35rem;
+    margin-bottom: 0.55rem;
     font-weight: 800;
     color: #1f2937;
-    margin-top: 1.2rem;
-    margin-bottom: 0.8rem;
 }
 
 
-/* ----------------------------------------------------------
-   retrospective box
----------------------------------------------------------- */
-
-.validation-box {
-    border: 1px solid #dbeafe;
-    border-radius: 14px;
-    padding: 1.2rem;
-    background-color: #eff6ff;
-}
-
-
-/* ----------------------------------------------------------
-   하단 disclaimer
----------------------------------------------------------- */
+/* ==========================================================
+   Disclaimer
+========================================================== */
 
 .disclaimer {
-    font-size: 0.84rem;
     color: #6b7280;
+    font-size: 0.84rem;
     line-height: 1.5;
 }
 
@@ -244,7 +327,54 @@ st.markdown(
 
 
 # ============================================================
-# 3. DATA LOAD
+# 3. SAFE FILE CHECK
+# ============================================================
+
+required_files = [
+
+    SYSTEM_FILE,
+    METRICS_FILE,
+    FIRST_ALARM_FILE,
+    THRESHOLD_FILE,
+    PROCESS_IMPORTANCE_FILE
+]
+
+
+missing_files = [
+
+    file
+    for file
+    in required_files
+    if not file.exists()
+]
+
+
+if len(missing_files) > 0:
+
+    st.error(
+        "Dashboard data files could not be found."
+    )
+
+    st.write(
+        "Detected base directory:",
+        str(BASE_DIR)
+    )
+
+    st.write(
+        "Missing files:"
+    )
+
+    for file in missing_files:
+
+        st.code(
+            str(file)
+        )
+
+    st.stop()
+
+
+# ============================================================
+# 4. DATA LOAD
 # ============================================================
 
 @st.cache_data
@@ -272,11 +402,39 @@ def load_data():
 
 
     # --------------------------------------------------------
-    # bool column normalize
+    # Optional validation data
+    # --------------------------------------------------------
+
+    if BASELINE_VALIDATION_FILE.exists():
+
+        baseline_validation_df = pd.read_csv(
+            BASELINE_VALIDATION_FILE
+        )
+
+    else:
+
+        baseline_validation_df = pd.DataFrame()
+
+
+    if MODEL_COMPARISON_FILE.exists():
+
+        model_comparison_df = pd.read_csv(
+            MODEL_COMPARISON_FILE
+        )
+
+    else:
+
+        model_comparison_df = pd.DataFrame()
+
+
+    # --------------------------------------------------------
+    # Boolean normalization
     # --------------------------------------------------------
 
     bool_columns = [
+
         "ai_warning",
+
         "successful_first_alarm_one_step_warning"
     ]
 
@@ -286,6 +444,7 @@ def load_data():
         if column in system_df.columns:
 
             system_df[column] = (
+
                 system_df[column]
                 .astype(str)
                 .str.lower()
@@ -299,11 +458,20 @@ def load_data():
 
 
     return (
+
         system_df,
+
         metrics_df,
+
         first_alarm_df,
+
         threshold_df,
-        process_importance_df
+
+        process_importance_df,
+
+        baseline_validation_df,
+
+        model_comparison_df
     )
 
 
@@ -312,12 +480,14 @@ def load_data():
     metrics_df,
     first_alarm_df,
     threshold_df,
-    process_importance_df
+    process_importance_df,
+    baseline_validation_df,
+    model_comparison_df
 ) = load_data()
 
 
 # ============================================================
-# 4. HELPERS
+# 5. HELPERS
 # ============================================================
 
 def get_metric(
@@ -326,18 +496,23 @@ def get_metric(
 ):
 
     row = (
+
         metrics_df[
             metrics_df[
                 "metric"
             ]
             == metric_name
         ]
+
     )
 
+
     if len(row) == 0:
+
         return default
 
-    return (
+
+    return float(
         row
         .iloc[0][
             "value"
@@ -350,11 +525,21 @@ def clean_process_name(
 ):
 
     if pd.isna(name):
+
         return "-"
+
 
     clean = str(name)
 
+
+    clean = clean.replace(
+        "current_",
+        ""
+    )
+
+
     replacements = {
+
         "HeliumBPFlow":
             "Helium BP Flow",
 
@@ -386,12 +571,14 @@ def clean_process_name(
             "Chamber Pressure"
     }
 
+
     for old, new in replacements.items():
 
         clean = clean.replace(
             old,
             new
         )
+
 
     clean = clean.replace(
         "_mean",
@@ -400,23 +587,24 @@ def clean_process_name(
 
     clean = clean.replace(
         "_std",
-        " (std)"
+        " (variation)"
     )
 
     clean = clean.replace(
         "_min",
-        " (min)"
+        " (minimum)"
     )
 
     clean = clean.replace(
         "_max",
-        " (max)"
+        " (maximum)"
     )
+
 
     return clean
 
 
-def status_badge(
+def simple_status_badge(
     status
 ):
 
@@ -424,102 +612,131 @@ def status_badge(
 
         return (
             '<span class="badge-normal">'
-            '● NORMAL'
+            '● 정상'
             '</span>'
         )
+
 
     if status == "EARLY WARNING":
 
         return (
             '<span class="badge-warning">'
-            '● EARLY WARNING'
+            '⚠ 사전 경고'
             '</span>'
         )
+
 
     if status == "SPC ALARM":
 
         return (
             '<span class="badge-alarm">'
-            '● SPC ALARM'
+            '● SPC 이상'
             '</span>'
         )
 
-    return status
+
+    return str(status)
 
 
-def result_badge(
+def result_text(
     result
 ):
 
     if result == "TRUE EARLY WARNING":
 
         return (
-            "✅ TRUE EARLY WARNING"
+            "✅ AI가 실제 이상을 사전에 경고했습니다."
         )
+
 
     if result == "FALSE EARLY WARNING":
 
         return (
-            "⚠️ FALSE EARLY WARNING"
+            "⚠️ AI가 경고했지만 실제 다음 wafer는 정상이었습니다."
         )
+
 
     if result == "MISSED EARLY WARNING":
 
         return (
-            "❌ MISSED EARLY WARNING"
+            "❌ AI가 위험을 놓쳤고 실제 다음 wafer에서 이상이 발생했습니다."
         )
+
 
     if result == "CORRECT NORMAL":
 
         return (
-            "✅ CORRECT NORMAL"
+            "✅ AI가 정상으로 판단했고 실제 다음 wafer도 정상이었습니다."
         )
 
-    return str(result)
+
+    return str(
+        result
+    )
 
 
 # ============================================================
-# 5. SIDEBAR
+# 6. SIDEBAR
 # ============================================================
 
 st.sidebar.markdown(
-    "## AI-SPC Monitor"
+    "## ⚙️ AI-SPC Monitor"
 )
 
+
 page = st.sidebar.radio(
-    "Navigation",
+
+    "화면 선택",
+
     [
-        "Live Monitor",
-        "Lot Timeline",
-        "Model Performance",
-        "Process Explanation"
+
+        "📡 Live Monitor",
+
+        "📈 Lot Timeline",
+
+        "🔬 Model Validation"
     ]
 )
 
-st.sidebar.markdown("---")
+
+st.sidebar.markdown(
+    "---"
+)
+
 
 st.sidebar.markdown(
     """
-**System concept**
+### 연구 흐름
 
-Current wafer  
-→ AI next-wafer prediction  
-→ Process explanation  
-→ Engineer review
+**현재 wafer 확인**
+
+↓
+
+**AI가 다음 wafer 예측**
+
+↓
+
+**위험 시 사전 경고**
+
+↓
+
+**엔지니어 최종 판단**
 """
 )
+
 
 st.sidebar.caption(
     "Prediction horizon: exactly 1 wafer ahead"
 )
 
+
 st.sidebar.caption(
-    "Historical-data decision-support prototype"
+    "AI는 공정 recipe를 자동 변경하지 않습니다."
 )
 
 
 # ============================================================
-# 6. HEADER
+# 7. HEADER
 # ============================================================
 
 st.markdown(
@@ -529,7 +746,7 @@ AI–SPC Process Monitor
 </div>
 
 <div class="sub-title">
-AI-assisted one-wafer-ahead process drift early-warning prototype
+현재 wafer의 공정 정보를 이용해 바로 다음 wafer의 SPC 이상 위험을 예측하는 사전경고 시스템
 </div>
 """,
     unsafe_allow_html=True
@@ -540,20 +757,19 @@ AI-assisted one-wafer-ahead process drift early-warning prototype
 # PAGE 1. LIVE MONITOR
 # ============================================================
 
-if page == "Live Monitor":
+if page == "📡 Live Monitor":
+
 
     # ========================================================
     # Selector
     # ========================================================
 
-    selector_col1, selector_col2, selector_col3 = (
-        st.columns(
-            [
-                1,
-                1,
-                2
-            ]
-        )
+    select1, select2, select3 = st.columns(
+        [
+            1,
+            1,
+            2
+        ]
     )
 
 
@@ -565,29 +781,33 @@ if page == "Live Monitor":
     )
 
 
-    with selector_col1:
+    with select1:
 
         selected_lot = st.selectbox(
-            "Lot",
+            "Lot 선택",
             lot_list
         )
 
 
     lot_df = (
+
         system_df[
             system_df[
                 "lot_number"
             ]
             == selected_lot
         ]
+
         .sort_values(
             "current_wafer"
         )
+
         .copy()
     )
 
 
     wafer_list = (
+
         lot_df[
             "current_wafer"
         ]
@@ -596,23 +816,25 @@ if page == "Live Monitor":
     )
 
 
-    with selector_col2:
+    with select2:
 
-        selected_current_wafer = (
-            st.selectbox(
-                "Current wafer",
-                wafer_list
-            )
+        selected_current_wafer = st.selectbox(
+
+            "현재 Wafer",
+
+            wafer_list
         )
 
 
     selected_row = (
+
         lot_df[
             lot_df[
                 "current_wafer"
             ]
             == selected_current_wafer
         ]
+
         .iloc[0]
     )
 
@@ -624,19 +846,21 @@ if page == "Live Monitor":
     )
 
 
-    with selector_col3:
+    with select3:
 
         st.markdown(
             f"""
 <div style="
-padding-top:1.9rem;
-font-size:1.15rem;
-font-weight:650;
+padding-top:1.8rem;
+font-size:1.2rem;
+font-weight:800;
 color:#374151;
 ">
-Lot {int(selected_lot)} |
-Current W{int(selected_current_wafer)}
-→ Predict W{next_wafer}
+Lot {int(selected_lot)}
+&nbsp;&nbsp;|&nbsp;&nbsp;
+현재 W{int(selected_current_wafer)}
+&nbsp;&nbsp;→&nbsp;&nbsp;
+다음 W{next_wafer} 예측
 </div>
 """,
             unsafe_allow_html=True
@@ -647,13 +871,8 @@ Current W{int(selected_current_wafer)}
 
 
     # ========================================================
-    # Top 3 status cards
+    # MAIN 3-STEP FLOW
     # ========================================================
-
-    card1, card2, card3 = st.columns(
-        3
-    )
-
 
     current_spc_status = str(
         selected_row[
@@ -669,13 +888,6 @@ Current W{int(selected_current_wafer)}
     )
 
 
-    engineer_action = str(
-        selected_row[
-            "engineer_action"
-        ]
-    )
-
-
     risk = float(
         selected_row[
             "predicted_risk"
@@ -683,40 +895,52 @@ Current W{int(selected_current_wafer)}
     )
 
 
+    card1, arrow1, card2, arrow2, card3 = st.columns(
+
+        [
+            4,
+            0.55,
+            4,
+            0.55,
+            4
+        ]
+    )
+
+
     # --------------------------------------------------------
-    # Card 1 - Current SPC
+    # STEP 1
     # --------------------------------------------------------
 
     with card1:
 
         st.markdown(
             f"""
-<div class="monitor-card">
+<div class="step-card">
 
-<div class="card-title">
-1. CURRENT WAFER / CONVENTIONAL SPC
+<div class="step-number">
+STEP 1
 </div>
 
-<div class="card-main">
-{current_spc_status}
+<div class="step-title">
+현재 공정 상태
 </div>
 
-<div class="card-sub">
-Current W{int(selected_current_wafer)} etch:
+<div class="big-status">
+{simple_status_badge(current_spc_status)}
+</div>
+
+<div class="small-description">
+
+현재 W{int(selected_current_wafer)}의
+평균 식각 깊이:
+
 <b>{selected_row['current_mean_si_etch']:.3f}</b>
-<br><br>
-LCL:
-<b>{selected_row['LCL']:.3f}</b>
-&nbsp;&nbsp;
-CL:
-<b>{selected_row['CL']:.3f}</b>
-&nbsp;&nbsp;
-UCL:
-<b>{selected_row['UCL']:.3f}</b>
-</div>
 
-<div class="card-caption">
-Current wafer has already been measured.
+<br><br>
+
+현재 wafer의 실제 측정 결과를
+기존 SPC 기준으로 확인합니다.
+
 </div>
 
 </div>
@@ -725,110 +949,166 @@ Current wafer has already been measured.
         )
 
 
+    with arrow1:
+
+        st.markdown(
+            """
+<div style="
+font-size:2rem;
+text-align:center;
+padding-top:5rem;
+color:#9ca3af;
+">
+→
+</div>
+""",
+            unsafe_allow_html=True
+        )
+
+
     # --------------------------------------------------------
-    # Card 2 - AI forecast
+    # STEP 2
     # --------------------------------------------------------
 
     with card2:
 
-        st.markdown(
-            f"""
-<div class="monitor-card">
-
-<div class="card-title">
-2. AI NEXT-WAFER FORECAST
-</div>
-
-<div class="card-main">
-W{next_wafer} Risk: {risk:.1%}
-</div>
-
-<div style="margin-top:0.5rem;">
-{status_badge(system_status)}
-</div>
-
-<div class="card-caption">
-Warning threshold = 50%
-<br>
-Prediction horizon = 1 wafer
-</div>
-
-</div>
-""",
-            unsafe_allow_html=True
-        )
-
-
-    # --------------------------------------------------------
-    # Card 3 - Engineer
-    # --------------------------------------------------------
-
-    with card3:
-
         if system_status == "EARLY WARNING":
 
-            action_text = (
-                "ENGINEER REVIEW REQUIRED"
-            )
-
-            action_description = (
-                "Review highlighted process signals "
-                "before deciding whether intervention is needed."
+            prediction_text = (
+                f"다음 W{next_wafer}에서 "
+                "SPC 이상 가능성이 높다고 판단했습니다."
             )
 
         elif system_status == "SPC ALARM":
 
-            action_text = (
-                "ENGINEER ACTION REQUIRED"
-            )
-
-            action_description = (
-                "Conventional SPC has already detected "
-                "an out-of-control wafer."
+            prediction_text = (
+                "현재 SPC가 이미 이상 상태를 감지했습니다."
             )
 
         else:
 
-            action_text = (
-                "CONTINUE MONITORING"
-            )
-
-            action_description = (
-                "No AI warning is issued at the current threshold."
+            prediction_text = (
+                f"다음 W{next_wafer}의 "
+                "SPC 이상 위험이 낮다고 판단했습니다."
             )
 
 
         st.markdown(
             f"""
-<div class="monitor-card">
+<div class="step-card">
 
-<div class="card-title">
-3. ENGINEER DECISION SUPPORT
+<div class="step-number">
+STEP 2
+</div>
+
+<div class="step-title">
+AI 다음 Wafer 예측
+</div>
+
+<div class="big-risk">
+{risk:.0%}
+</div>
+
+<div>
+{simple_status_badge(system_status)}
+</div>
+
+<br>
+
+<div class="small-description">
+{prediction_text}
+</div>
+
+</div>
+""",
+            unsafe_allow_html=True
+        )
+
+
+    with arrow2:
+
+        st.markdown(
+            """
+<div style="
+font-size:2rem;
+text-align:center;
+padding-top:5rem;
+color:#9ca3af;
+">
+→
+</div>
+""",
+            unsafe_allow_html=True
+        )
+
+
+    # --------------------------------------------------------
+    # STEP 3
+    # --------------------------------------------------------
+
+    with card3:
+
+
+        if system_status == "EARLY WARNING":
+
+            action_title = (
+                "👨‍🔧 엔지니어 확인 필요"
+            )
+
+            action_description = (
+                "AI가 위험 신호를 감지했습니다. "
+                "주요 공정 센서를 확인한 뒤 "
+                "공정 조정 여부를 엔지니어가 결정합니다."
+            )
+
+
+        elif system_status == "SPC ALARM":
+
+            action_title = (
+                "🚨 SPC 이상 확인"
+            )
+
+            action_description = (
+                "기존 SPC가 이미 이상을 감지했습니다. "
+                "엔지니어의 공정 점검이 필요합니다."
+            )
+
+
+        else:
+
+            action_title = (
+                "✅ 계속 모니터링"
+            )
+
+            action_description = (
+                "현재 AI 사전경고는 없습니다. "
+                "다음 wafer까지 공정을 계속 모니터링합니다."
+            )
+
+
+        st.markdown(
+            f"""
+<div class="step-card">
+
+<div class="step-number">
+STEP 3
+</div>
+
+<div class="step-title">
+최종 판단
 </div>
 
 <div style="
-font-size:1.35rem;
-font-weight:800;
-line-height:1.25;
-color:#111827;
-margin-bottom:0.8rem;
+font-size:1.55rem;
+font-weight:900;
+margin-top:0.6rem;
+margin-bottom:1rem;
 ">
-{action_text}
+{action_title}
 </div>
 
-<div class="card-sub">
+<div class="small-description">
 {action_description}
-<br><br>
-Conditioning:
-<b>
-{selected_row['conditioning_count']}
-/
-{selected_row['conditioning_surface']}
-</b>
-</div>
-
-<div class="card-caption">
-AI does not automatically change the recipe.
 </div>
 
 </div>
@@ -838,441 +1118,289 @@ AI does not automatically change the recipe.
 
 
     # ========================================================
-    # WHY DID AI WARN?
+    # SIMPLE MESSAGE
     # ========================================================
 
     st.markdown(
         """
 <div class="section-title">
-Why did AI make this prediction?
+이 화면이 의미하는 것은?
 </div>
 """,
         unsafe_allow_html=True
     )
 
 
-    shap_cols = st.columns(
-        3
-    )
-
-
-    for rank in range(
-        1,
-        4
+    if (
+        current_spc_status == "NORMAL"
+        and
+        system_status == "EARLY WARNING"
     ):
 
-        process_name = (
-            selected_row[
+        st.warning(
+            (
+                f"현재 W{int(selected_current_wafer)}는 "
+                f"SPC 기준으로 정상입니다. "
+                f"하지만 AI는 다음 W{next_wafer}의 "
+                f"이상 위험을 {risk:.0%}로 예측하여 "
+                f"사전 경고를 발생시켰습니다."
+            )
+        )
+
+
+    elif system_status == "NORMAL":
+
+        st.success(
+            (
+                f"현재 W{int(selected_current_wafer)}도 정상이고, "
+                f"AI 역시 다음 W{next_wafer}의 위험을 "
+                f"낮게 평가했습니다."
+            )
+        )
+
+
+    else:
+
+        st.error(
+            "현재 conventional SPC가 이미 이상 상태를 감지했습니다."
+        )
+
+
+    # ========================================================
+    # DETAILS
+    # ========================================================
+
+    with st.expander(
+        "🔎 상세 분석 보기"
+    ):
+
+
+        # ----------------------------------------------------
+        # SPC details
+        # ----------------------------------------------------
+
+        st.markdown(
+            "### 기존 SPC 기준"
+        )
+
+
+        spc1, spc2, spc3, spc4 = st.columns(
+            4
+        )
+
+
+        spc1.metric(
+            "현재 식각 깊이",
+            f"{selected_row['current_mean_si_etch']:.3f}"
+        )
+
+
+        spc2.metric(
+            "LCL",
+            f"{selected_row['LCL']:.3f}"
+        )
+
+
+        spc3.metric(
+            "Center Line",
+            f"{selected_row['CL']:.3f}"
+        )
+
+
+        spc4.metric(
+            "UCL",
+            f"{selected_row['UCL']:.3f}"
+        )
+
+
+        # ----------------------------------------------------
+        # Contributor explanation
+        # ----------------------------------------------------
+
+        st.markdown(
+            "### AI 판단에 기여한 주요 공정 신호"
+        )
+
+
+        contributor_cols = st.columns(
+            3
+        )
+
+
+        for rank in range(
+            1,
+            4
+        ):
+
+
+            process_name = selected_row[
                 f"top{rank}_process"
             ]
-        )
 
-        process_value = (
-            selected_row[
+
+            process_value = selected_row[
                 f"top{rank}_value"
             ]
-        )
 
-        process_shap_value = (
-            selected_row[
+
+            process_shap_value = selected_row[
                 f"top{rank}_shap"
             ]
-        )
 
 
-        with shap_cols[
-            rank - 1
-        ]:
+            with contributor_cols[
+                rank - 1
+            ]:
 
-            if pd.isna(
-                process_name
-            ):
 
-                st.markdown(
-                    """
-<div class="shap-card">
-No positive process contributor
-</div>
-""",
-                    unsafe_allow_html=True
-                )
+                if pd.isna(
+                    process_name
+                ):
 
-            else:
+                    st.info(
+                        "표시할 공정 변수가 없습니다."
+                    )
 
-                st.markdown(
-                    f"""
-<div class="shap-card">
 
-<div class="shap-rank">
-#{rank} PROCESS CONTRIBUTOR
+                else:
+
+                    st.markdown(
+                        f"""
+<div class="contributor-card">
+
+<div class="contributor-rank">
+#{rank} 주요 공정 신호
 </div>
 
-<div class="shap-name">
+<div class="contributor-name">
 {clean_process_name(process_name)}
 </div>
 
-<div class="shap-value">
-Sensor summary value:
+센서 요약값:
 <b>{process_value:.4f}</b>
-</div>
 
-<div class="shap-value">
-SHAP contribution:
+<br>
+
+AI 기여도:
 <b>{process_shap_value:+.3f}</b>
-</div>
 
 </div>
 """,
-                    unsafe_allow_html=True
-                )
+                        unsafe_allow_html=True
+                    )
 
 
-    st.info(
-        (
-            "These SHAP contributors explain which process signals "
-            "pushed the AI prediction toward higher SPC-violation risk. "
-            "They are predictive associations, not proof of causal mechanism."
+        st.caption(
+            (
+                "SHAP은 AI가 어떤 공정 신호를 중요하게 사용했는지 "
+                "설명하는 지표입니다. "
+                "해당 변수가 실제 이상 원인이라는 뜻은 아닙니다."
+            )
         )
-    )
-
-
-    # ========================================================
-    # MINI SPC CHART
-    # ========================================================
-
-    st.markdown(
-        """
-<div class="section-title">
-Current SPC Position
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
-
-    current_value = float(
-        selected_row[
-            "current_mean_si_etch"
-        ]
-    )
-
-
-    spc_fig = go.Figure()
-
-
-    # --------------------------------------------------------
-    # Range
-    # --------------------------------------------------------
-
-    x_min = min(
-        float(
-            selected_row[
-                "LCL"
-            ]
-        ),
-        current_value
-    ) - 0.20
-
-
-    x_max = max(
-        float(
-            selected_row[
-                "UCL"
-            ]
-        ),
-        current_value
-    ) + 0.20
-
-
-    spc_fig.add_trace(
-        go.Scatter(
-            x=[
-                selected_row[
-                    "LCL"
-                ],
-                selected_row[
-                    "UCL"
-                ]
-            ],
-
-            y=[
-                0,
-                0
-            ],
-
-            mode="lines",
-
-            line=dict(
-                width=12
-            ),
-
-            name="Control range",
-
-            hoverinfo="skip"
-        )
-    )
-
-
-    spc_fig.add_trace(
-        go.Scatter(
-            x=[
-                selected_row[
-                    "LCL"
-                ]
-            ],
-
-            y=[
-                0
-            ],
-
-            mode="markers+text",
-
-            marker=dict(
-                size=14
-            ),
-
-            text=[
-                "LCL"
-            ],
-
-            textposition=
-                "bottom center",
-
-            name="LCL"
-        )
-    )
-
-
-    spc_fig.add_trace(
-        go.Scatter(
-            x=[
-                selected_row[
-                    "CL"
-                ]
-            ],
-
-            y=[
-                0
-            ],
-
-            mode="markers+text",
-
-            marker=dict(
-                size=14
-            ),
-
-            text=[
-                "CL"
-            ],
-
-            textposition=
-                "bottom center",
-
-            name="CL"
-        )
-    )
-
-
-    spc_fig.add_trace(
-        go.Scatter(
-            x=[
-                selected_row[
-                    "UCL"
-                ]
-            ],
-
-            y=[
-                0
-            ],
-
-            mode="markers+text",
-
-            marker=dict(
-                size=14
-            ),
-
-            text=[
-                "UCL"
-            ],
-
-            textposition=
-                "bottom center",
-
-            name="UCL"
-        )
-    )
-
-
-    spc_fig.add_trace(
-        go.Scatter(
-            x=[
-                current_value
-            ],
-
-            y=[
-                0
-            ],
-
-            mode="markers+text",
-
-            marker=dict(
-                size=22,
-                symbol="diamond"
-            ),
-
-            text=[
-                (
-                    f"W{int(selected_current_wafer)}"
-                    f"<br>{current_value:.3f}"
-                )
-            ],
-
-            textposition=
-                "top center",
-
-            name="Current wafer"
-        )
-    )
-
-
-    spc_fig.update_layout(
-        height=250,
-
-        margin=dict(
-            l=20,
-            r=20,
-            t=20,
-            b=20
-        ),
-
-        showlegend=False,
-
-        xaxis=dict(
-            title=
-                "Mean Si etch depth",
-
-            range=[
-                x_min,
-                x_max
-            ]
-        ),
-
-        yaxis=dict(
-            visible=False,
-            range=[
-                -0.5,
-                0.5
-            ]
-        )
-    )
-
-
-    st.plotly_chart(
-        spc_fig,
-        use_container_width=True
-    )
 
 
     # ========================================================
     # RETROSPECTIVE VALIDATION
     # ========================================================
 
-    st.markdown("---")
+    with st.expander(
+        "🧪 실제 다음 Wafer 결과 확인"
+    ):
 
 
-    st.markdown(
-        """
-<div class="section-title">
-Retrospective Validation
-</div>
-
-<div class="disclaimer">
-This section contains information that would not be available
-at the moment the AI prediction is issued.
-It is shown only to evaluate whether the historical prediction
-was correct.
-</div>
-""",
-        unsafe_allow_html=True
-    )
+        st.caption(
+            (
+                "이 정보는 실제 예측 시점에는 알 수 없습니다. "
+                "연구에서 AI 예측이 맞았는지 확인하기 위한 "
+                "사후 검증 결과입니다."
+            )
+        )
 
 
-    show_outcome = st.toggle(
-        "Reveal observed next-wafer outcome"
-    )
-
-
-    if show_outcome:
-
-        outcome1, outcome2 = st.columns(
-            [
-                1,
-                1
+        actual_status = str(
+            selected_row[
+                "next_actual_status"
             ]
         )
 
 
-        with outcome1:
+        warning_result = str(
+            selected_row[
+                "warning_result"
+            ]
+        )
 
-            st.markdown(
-                f"""
-<div class="validation-box">
 
-<b>Observed W{next_wafer}</b>
+        result_col1, result_col2 = st.columns(
+            2
+        )
 
-<br><br>
 
-Actual etch:
-<b>
-{selected_row['next_actual_mean_si_etch']:.3f}
-</b>
+        with result_col1:
 
-<br><br>
-
-Actual SPC result:
-<b>
-{selected_row['next_actual_status']}
-</b>
-
-</div>
-""",
-                unsafe_allow_html=True
+            st.metric(
+                f"실제 W{next_wafer} 식각 깊이",
+                f"{selected_row['next_actual_mean_si_etch']:.3f}"
             )
 
 
-        with outcome2:
-
-            warning_result = (
-                selected_row[
-                    "warning_result"
-                ]
+            st.write(
+                "실제 SPC 상태:"
             )
 
 
-            st.markdown(
-                f"""
-<div class="validation-box">
+            if actual_status == "SPC VIOLATION":
 
-<b>Prediction evaluation</b>
+                st.error(
+                    "🔴 SPC 이상 발생"
+                )
 
-<br><br>
+            else:
 
-{result_badge(warning_result)}
+                st.success(
+                    "🟢 정상"
+                )
 
-<br><br>
 
-AI risk at W{int(selected_current_wafer)}:
-<b>{risk:.1%}</b>
+        with result_col2:
 
-</div>
-""",
-                unsafe_allow_html=True
+            st.write(
+                "AI 예측 평가:"
             )
 
 
-        # ----------------------------------------------------
-        # Successful first alarm warning
-        # ----------------------------------------------------
+            result_message = result_text(
+                warning_result
+            )
+
+
+            if warning_result == "TRUE EARLY WARNING":
+
+                st.success(
+                    result_message
+                )
+
+
+            elif warning_result == "FALSE EARLY WARNING":
+
+                st.warning(
+                    result_message
+                )
+
+
+            elif warning_result == "MISSED EARLY WARNING":
+
+                st.error(
+                    result_message
+                )
+
+
+            else:
+
+                st.success(
+                    result_message
+                )
+
 
         if bool(
             selected_row[
@@ -1282,120 +1410,37 @@ AI risk at W{int(selected_current_wafer)}:
 
             st.success(
                 (
-                    f"Successful 1-wafer-ahead warning: "
-                    f"the AI warned at W{int(selected_current_wafer)}, "
-                    f"and W{next_wafer} became the first SPC alarm."
+                    f"🎯 이 사례에서는 AI가 W"
+                    f"{int(selected_current_wafer)} 시점에서 "
+                    f"W{next_wafer} 위험을 경고했고, "
+                    f"실제로 W{next_wafer}에서 "
+                    f"최초 SPC 이상이 발생했습니다."
                 )
             )
-
-
-        # ====================================================
-        # Before vs after SPC plot
-        # ====================================================
-
-        validation_fig = go.Figure()
-
-
-        validation_fig.add_hline(
-            y=float(
-                selected_row[
-                    "CL"
-                ]
-            ),
-            line_dash="solid",
-            annotation_text="CL"
-        )
-
-
-        validation_fig.add_hline(
-            y=float(
-                selected_row[
-                    "LCL"
-                ]
-            ),
-            line_dash="dash",
-            annotation_text="LCL"
-        )
-
-
-        validation_fig.add_hline(
-            y=float(
-                selected_row[
-                    "UCL"
-                ]
-            ),
-            line_dash="dash",
-            annotation_text="UCL"
-        )
-
-
-        validation_fig.add_trace(
-            go.Scatter(
-                x=[
-                    f"W{int(selected_current_wafer)}",
-                    f"W{next_wafer}"
-                ],
-
-                y=[
-                    selected_row[
-                        "current_mean_si_etch"
-                    ],
-                    selected_row[
-                        "next_actual_mean_si_etch"
-                    ]
-                ],
-
-                mode="lines+markers+text",
-
-                text=[
-                    "Current",
-                    "Observed next"
-                ],
-
-                textposition=
-                    "top center",
-
-                name="Etch depth"
-            )
-        )
-
-
-        validation_fig.update_layout(
-            title=(
-                "Current wafer vs observed next wafer"
-            ),
-
-            xaxis_title=
-                "Wafer",
-
-            yaxis_title=
-                "Mean Si etch depth",
-
-            height=380,
-
-            showlegend=False
-        )
-
-
-        st.plotly_chart(
-            validation_fig,
-            use_container_width=True
-        )
 
 
 # ============================================================
 # PAGE 2. LOT TIMELINE
 # ============================================================
 
-elif page == "Lot Timeline":
+elif page == "📈 Lot Timeline":
+
 
     st.markdown(
         """
 <div class="section-title">
-Lot Timeline
+Lot 전체 흐름
 </div>
 """,
         unsafe_allow_html=True
+    )
+
+
+    st.write(
+        (
+            "한 Lot 안에서 AI 위험도가 어떻게 변하고, "
+            "언제 실제 SPC 이상이 발생했는지 확인합니다."
+        )
     )
 
 
@@ -1408,28 +1453,34 @@ Lot Timeline
 
 
     selected_lot = st.selectbox(
-        "Select Lot",
+
+        "Lot 선택",
+
         lot_list,
+
         key="timeline_lot"
     )
 
 
     lot_df = (
+
         system_df[
             system_df[
                 "lot_number"
             ]
             == selected_lot
         ]
+
         .sort_values(
             "next_wafer"
         )
+
         .copy()
     )
 
 
     # ========================================================
-    # Risk chart
+    # Risk curve
     # ========================================================
 
     fig = go.Figure()
@@ -1437,6 +1488,7 @@ Lot Timeline
 
     fig.add_trace(
         go.Scatter(
+
             x=lot_df[
                 "next_wafer"
             ],
@@ -1449,32 +1501,37 @@ Lot Timeline
                 "lines+markers",
 
             name=
-                "AI next-wafer risk",
+                "AI 위험도",
 
-            hovertemplate=(
-                "Predicted W%{x}<br>"
-                "Risk=%{y:.1%}"
-                "<extra></extra>"
-            )
+            hovertemplate=
+                (
+                    "예측 대상 W%{x}"
+                    "<br>"
+                    "위험도 %{y:.1%}"
+                    "<extra></extra>"
+                )
         )
     )
 
 
     fig.add_hline(
+
         y=0.50,
-        line_dash="dash",
-        annotation_text="AI warning threshold"
+
+        line_dash=
+            "dash",
+
+        annotation_text=
+            "사전경고 기준 50%"
     )
 
 
-    warning_rows = (
+    warning_rows = lot_df[
         lot_df[
-            lot_df[
-                "ai_warning"
-            ]
-            == True
+            "ai_warning"
         ]
-    )
+        == True
+    ]
 
 
     if len(
@@ -1483,6 +1540,7 @@ Lot Timeline
 
         fig.add_trace(
             go.Scatter(
+
                 x=warning_rows[
                     "next_wafer"
                 ],
@@ -1494,59 +1552,23 @@ Lot Timeline
                 mode="markers",
 
                 marker=dict(
-                    size=14,
-                    symbol="triangle-up"
+                    size=15,
+                    symbol=
+                        "triangle-up"
                 ),
 
-                name="AI warning"
+                name=
+                    "AI 사전경고"
             )
         )
 
 
-    violation_rows = (
+    first_alarm_rows = lot_df[
         lot_df[
-            lot_df[
-                "next_spc_violation"
-            ]
-            == 1
+            "next_first_spc_alarm"
         ]
-    )
-
-
-    if len(
-        violation_rows
-    ) > 0:
-
-        fig.add_trace(
-            go.Scatter(
-                x=violation_rows[
-                    "next_wafer"
-                ],
-
-                y=violation_rows[
-                    "predicted_risk"
-                ],
-
-                mode="markers",
-
-                marker=dict(
-                    size=14,
-                    symbol="x"
-                ),
-
-                name="Observed SPC violation"
-            )
-        )
-
-
-    first_alarm_rows = (
-        lot_df[
-            lot_df[
-                "next_first_spc_alarm"
-            ]
-            == 1
-        ]
-    )
+        == 1
+    ]
 
 
     if len(
@@ -1554,6 +1576,7 @@ Lot Timeline
     ) > 0:
 
         first_alarm_wafer = int(
+
             first_alarm_rows[
                 "next_wafer"
             ]
@@ -1562,26 +1585,34 @@ Lot Timeline
 
 
         fig.add_vline(
-            x=first_alarm_wafer,
-            line_dash="dot",
-            annotation_text=(
-                f"First SPC alarm W"
-                f"{first_alarm_wafer}"
-            )
+
+            x=
+                first_alarm_wafer,
+
+            line_dash=
+                "dot",
+
+            annotation_text=
+                (
+                    f"최초 SPC 이상 W"
+                    f"{first_alarm_wafer}"
+                )
         )
 
 
     fig.update_layout(
-        title=(
-            f"Lot {int(selected_lot)}"
-            " — One-Step-Ahead AI Risk"
-        ),
+
+        title=
+            (
+                f"Lot {int(selected_lot)} "
+                "— 다음 Wafer AI 위험도"
+            ),
 
         xaxis_title=
-            "Predicted next wafer",
+            "예측 대상 Wafer",
 
         yaxis_title=
-            "SPC violation risk",
+            "AI 위험도",
 
         yaxis=dict(
             range=[
@@ -1591,404 +1622,198 @@ Lot Timeline
             tickformat=".0%"
         ),
 
-        hovermode="x unified",
+        height=480,
 
-        height=500
+        hovermode="x unified"
     )
 
 
     st.plotly_chart(
+
         fig,
+
         use_container_width=True
     )
 
 
     # ========================================================
-    # Timeline table
+    # Simple event summary
     # ========================================================
 
-    display_df = (
+    first_alarm_rows = lot_df[
         lot_df[
-            [
-                "current_wafer",
-                "next_wafer",
-                "current_spc_status",
-                "predicted_risk",
-                "system_status",
-                "next_actual_status",
-                "warning_result"
-            ]
+            "next_first_spc_alarm"
         ]
-        .copy()
-    )
-
-
-    display_df[
-        "predicted_risk"
-    ] = (
-        display_df[
-            "predicted_risk"
-        ]
-        .map(
-            lambda x:
-                f"{x:.1%}"
-        )
-    )
-
-
-    display_df = display_df.rename(
-        columns={
-            "current_wafer":
-                "Current wafer",
-
-            "next_wafer":
-                "Predicted wafer",
-
-            "current_spc_status":
-                "Current SPC",
-
-            "predicted_risk":
-                "AI risk",
-
-            "system_status":
-                "AI-SPC status",
-
-            "next_actual_status":
-                "Observed next wafer",
-
-            "warning_result":
-                "Evaluation"
-        }
-    )
-
-
-    st.dataframe(
-        display_df,
-        use_container_width=True,
-        hide_index=True
-    )
-
-
-# ============================================================
-# PAGE 3. MODEL PERFORMANCE
-# ============================================================
-
-elif page == "Model Performance":
-
-    st.markdown(
-        """
-<div class="section-title">
-Model Performance
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
-
-    precision = float(
-        get_metric(
-            "precision"
-        )
-    )
-
-    recall = float(
-        get_metric(
-            "recall"
-        )
-    )
-
-    specificity = float(
-        get_metric(
-            "specificity"
-        )
-    )
-
-    roc_auc = float(
-        get_metric(
-            "roc_auc"
-        )
-    )
-
-    false_warning_rate = float(
-        get_metric(
-            "false_warning_rate"
-        )
-    )
-
-    first_warning_rate = float(
-        get_metric(
-            "first_spc_alarm_warning_rate"
-        )
-    )
-
-
-    perf_cols = st.columns(
-        6
-    )
-
-
-    metric_values = [
-        (
-            "Recall",
-            f"{recall:.1%}"
-        ),
-
-        (
-            "Precision",
-            f"{precision:.1%}"
-        ),
-
-        (
-            "Specificity",
-            f"{specificity:.1%}"
-        ),
-
-        (
-            "ROC-AUC",
-            f"{roc_auc:.3f}"
-        ),
-
-        (
-            "False Warning",
-            f"{false_warning_rate:.1%}"
-        ),
-
-        (
-            "First Alarm Warning",
-            f"{first_warning_rate:.1%}"
-        )
+        == 1
     ]
 
 
-    for column, (
-        label,
-        value
-    ) in zip(
-        perf_cols,
-        metric_values
+    if len(
+        first_alarm_rows
+    ) > 0:
+
+
+        first_row = (
+            first_alarm_rows
+            .iloc[0]
+        )
+
+
+        target_wafer = int(
+            first_row[
+                "next_wafer"
+            ]
+        )
+
+
+        current_wafer = int(
+            first_row[
+                "current_wafer"
+            ]
+        )
+
+
+        risk_value = float(
+            first_row[
+                "predicted_risk"
+            ]
+        )
+
+
+        warned = bool(
+            first_row[
+                "successful_first_alarm_one_step_warning"
+            ]
+        )
+
+
+        if warned:
+
+            st.success(
+                (
+                    f"🎯 Lot {int(selected_lot)}: "
+                    f"W{current_wafer} 처리 후 AI가 "
+                    f"W{target_wafer} 위험을 "
+                    f"{risk_value:.0%}로 경고했고, "
+                    f"실제로 W{target_wafer}에서 "
+                    f"최초 SPC 이상이 발생했습니다."
+                )
+            )
+
+
+        else:
+
+            st.warning(
+                (
+                    f"Lot {int(selected_lot)}: "
+                    f"W{target_wafer}에서 최초 SPC 이상이 발생했지만, "
+                    f"직전 W{current_wafer}의 AI 위험도는 "
+                    f"{risk_value:.0%}로 사전경고 기준에 미달했습니다."
+                )
+            )
+
+
+    else:
+
+        st.info(
+            (
+                f"Lot {int(selected_lot)}에서는 "
+                "관측 가능한 wafer 구간 내 "
+                "최초 SPC 이상이 확인되지 않았습니다."
+            )
+        )
+
+
+    # ========================================================
+    # Detailed timeline
+    # ========================================================
+
+    with st.expander(
+        "📋 상세 Lot 데이터 보기"
     ):
 
-        with column:
 
-            st.metric(
-                label,
-                value
-            )
+        display_df = (
 
-
-    st.info(
-        (
-            "Among 8 observed first-SPC-alarm events, "
-            "5 were correctly warned at the immediately preceding wafer "
-            "(62.5%)."
-        )
-    )
-
-
-    # ========================================================
-    # First alarm risk
-    # ========================================================
-
-    first_display = (
-        first_alarm_df[
-            [
-                "lot_number",
-                "current_wafer",
-                "next_wafer",
-                "predicted_risk",
-                "one_step_prediction"
+            lot_df[
+                [
+                    "current_wafer",
+                    "next_wafer",
+                    "current_spc_status",
+                    "predicted_risk",
+                    "system_status",
+                    "next_actual_status",
+                    "warning_result"
+                ]
             ]
-        ]
-        .copy()
-    )
+
+            .copy()
+        )
 
 
-    first_display[
-        "Result"
-    ] = np.where(
-        first_display[
-            "one_step_prediction"
-        ]
-        == 1,
+        display_df[
+            "predicted_risk"
+        ] = (
 
-        "Warned",
-
-        "Missed"
-    )
-
-
-    first_alarm_fig = go.Figure()
-
-
-    first_alarm_fig.add_trace(
-        go.Bar(
-            x=[
-                (
-                    f"Lot "
-                    f"{int(x)}"
-                )
-                for x
-                in first_display[
-                    "lot_number"
-                ]
-            ],
-
-            y=first_display[
+            display_df[
                 "predicted_risk"
-            ],
+            ]
 
-            text=[
-                f"{x:.1%}"
-                for x
-                in first_display[
-                    "predicted_risk"
-                ]
-            ],
-
-            textposition="outside",
-
-            name="Risk"
-        )
-    )
-
-
-    first_alarm_fig.add_hline(
-        y=0.50,
-        line_dash="dash",
-        annotation_text="Warning threshold"
-    )
-
-
-    first_alarm_fig.update_layout(
-        title=
-            "AI Risk Immediately Before the First SPC Alarm",
-
-        yaxis=dict(
-            range=[
-                0,
-                1
-            ],
-            tickformat=".0%"
-        ),
-
-        xaxis_title="Lot",
-
-        yaxis_title="Predicted next-wafer risk",
-
-        height=450
-    )
-
-
-    st.plotly_chart(
-        first_alarm_fig,
-        use_container_width=True
-    )
-
-
-    # ========================================================
-    # Threshold trade-off
-    # ========================================================
-
-    st.markdown(
-        """
-<div class="section-title">
-Threshold Trade-off
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
-
-    threshold_fig = go.Figure()
-
-
-    for column_name, label in [
-        (
-            "recall",
-            "Recall"
-        ),
-        (
-            "precision",
-            "Precision"
-        ),
-        (
-            "false_warning_rate",
-            "False warning rate"
-        ),
-        (
-            "first_alarm_warning_rate",
-            "First alarm warning rate"
-        )
-    ]:
-
-        threshold_fig.add_trace(
-            go.Scatter(
-                x=threshold_df[
-                    "threshold"
-                ],
-
-                y=threshold_df[
-                    column_name
-                ],
-
-                mode="lines+markers",
-
-                name=label
+            .map(
+                lambda x:
+                    f"{x:.1%}"
             )
         )
 
 
-    threshold_fig.add_vline(
-        x=0.50,
-        line_dash="dash",
-        annotation_text="Main threshold"
-    )
+        display_df = display_df.rename(
+            columns={
 
+                "current_wafer":
+                    "현재 Wafer",
 
-    threshold_fig.update_layout(
-        xaxis_title=
-            "Warning threshold",
+                "next_wafer":
+                    "예측 대상",
 
-        yaxis_title=
-            "Metric",
+                "current_spc_status":
+                    "현재 SPC",
 
-        yaxis=dict(
-            range=[
-                0,
-                1
-            ],
-            tickformat=".0%"
-        ),
+                "predicted_risk":
+                    "AI 위험도",
 
-        height=480
-    )
+                "system_status":
+                    "AI 판단",
 
+                "next_actual_status":
+                    "실제 다음 결과",
 
-    st.plotly_chart(
-        threshold_fig,
-        use_container_width=True
-    )
-
-
-    st.caption(
-        (
-            "Threshold sensitivity is shown only to illustrate "
-            "the recall–false-warning trade-off. "
-            "The main reported evaluation uses threshold 0.50."
+                "warning_result":
+                    "평가"
+            }
         )
-    )
+
+
+        st.dataframe(
+
+            display_df,
+
+            use_container_width=True,
+
+            hide_index=True
+        )
 
 
 # ============================================================
-# PAGE 4. PROCESS EXPLANATION
+# PAGE 3. MODEL VALIDATION
 # ============================================================
 
-elif page == "Process Explanation":
+elif page == "🔬 Model Validation":
+
 
     st.markdown(
         """
 <div class="section-title">
-Process Explanation
+모델 검증 결과
 </div>
 """,
         unsafe_allow_html=True
@@ -1997,131 +1822,424 @@ Process Explanation
 
     st.write(
         (
-            "Process features repeatedly selected during "
-            "Leave-One-Lot-Out validation and their SHAP importance."
+            "AI가 얼마나 잘 맞혔는지와 "
+            "SPC baseline 및 AI 모델 선택의 타당성을 확인합니다."
         )
     )
 
 
-    top_n = st.slider(
-        "Number of process features",
-        min_value=5,
-        max_value=20,
-        value=10
+    # ========================================================
+    # Main performance
+    # ========================================================
+
+    st.markdown(
+        "### 1. 현재 AI Early-Warning 성능"
     )
 
 
-    importance_df = (
-        process_importance_df
-        .head(
-            top_n
-        )
-        .copy()
+    precision = get_metric(
+        "precision"
+    )
+
+    recall = get_metric(
+        "recall"
+    )
+
+    specificity = get_metric(
+        "specificity"
+    )
+
+    roc_auc = get_metric(
+        "roc_auc"
+    )
+
+    false_warning_rate = get_metric(
+        "false_warning_rate"
+    )
+
+    first_warning_rate = get_metric(
+        "first_spc_alarm_warning_rate"
     )
 
 
-    importance_df[
-        "display_name"
-    ] = (
-        importance_df[
-            "feature_clean"
-        ]
-        .apply(
-            clean_process_name
-        )
+    metrics_cols = st.columns(
+        6
     )
 
 
-    fig = go.Figure(
-        go.Bar(
-            x=importance_df[
-                "mean_abs_shap"
-            ],
+    metrics_values = [
 
-            y=importance_df[
-                "display_name"
-            ],
-
-            orientation="h",
-
-            text=[
-                f"{x:.3f}"
-                for x
-                in importance_df[
-                    "mean_abs_shap"
-                ]
-            ],
-
-            textposition="outside"
-        )
-    )
-
-
-    fig.update_layout(
-        title=
-            "Process Feature Importance",
-
-        xaxis_title=
-            "Mean |SHAP|",
-
-        yaxis_title=
-            "Process feature",
-
-        yaxis=dict(
-            autorange="reversed"
+        (
+            "이상 탐지율",
+            recall,
+            "%"
         ),
 
-        height=520
+        (
+            "경고 정확도",
+            precision,
+            "%"
+        ),
+
+        (
+            "정상 판별률",
+            specificity,
+            "%"
+        ),
+
+        (
+            "ROC-AUC",
+            roc_auc,
+            ""
+        ),
+
+        (
+            "오경고율",
+            false_warning_rate,
+            "%"
+        ),
+
+        (
+            "최초 이상 사전경고",
+            first_warning_rate,
+            "%"
+        )
+    ]
+
+
+    for column, (
+        label,
+        value,
+        kind
+    ) in zip(
+        metrics_cols,
+        metrics_values
+    ):
+
+
+        if kind == "%":
+
+            display_value = (
+                f"{value:.1%}"
+            )
+
+        else:
+
+            display_value = (
+                f"{value:.3f}"
+            )
+
+
+        with column:
+
+            st.metric(
+                label,
+                display_value
+            )
+
+
+    st.caption(
+        (
+            "현재 메인 시스템의 기존 보고 성능을 표시합니다. "
+            "모델 비교와 threshold 재선정 결과에 따라 "
+            "추후 최종 성능은 변경될 수 있습니다."
+        )
     )
 
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
+    # ========================================================
+    # Baseline validation
+    # ========================================================
+
+    st.markdown("---")
+
+    st.markdown(
+        "### 2. 왜 W1~W3를 SPC baseline으로 사용했나?"
     )
 
 
-    display_table = (
-        importance_df[
-            [
-                "display_name",
-                "selected_folds",
-                "mean_selection_rank",
-                "mean_abs_shap"
+    if len(
+        baseline_validation_df
+    ) > 0:
+
+
+        baseline_show = (
+            baseline_validation_df[
+                [
+                    "baseline_definition",
+                    "pooled_sigma",
+                    "three_sigma_half_width",
+                    "lots_with_spc_alarm"
+                ]
             ]
-        ]
-        .rename(
+            .copy()
+        )
+
+
+        baseline_show = baseline_show.rename(
             columns={
-                "display_name":
-                    "Process feature",
 
-                "selected_folds":
-                    "Selected LOLO folds",
+                "baseline_definition":
+                    "Baseline",
 
-                "mean_selection_rank":
-                    "Mean selection rank",
+                "pooled_sigma":
+                    "Pooled σ",
 
-                "mean_abs_shap":
-                    "Mean |SHAP|"
+                "three_sigma_half_width":
+                    "±3σ 폭",
+
+                "lots_with_spc_alarm":
+                    "SPC alarm Lot"
             }
         )
-    )
 
 
-    st.dataframe(
-        display_table,
-        use_container_width=True,
-        hide_index=True
-    )
+        st.dataframe(
 
+            baseline_show,
 
-    st.warning(
-        (
-            "SHAP and feature-selection results describe predictive "
-            "associations. They do not establish that changing the "
-            "highlighted variable will eliminate process drift."
+            use_container_width=True,
+
+            hide_index=True
         )
+
+
+        st.success(
+            (
+                "W1~W3에서 pooled σ와 lot 간 baseline 변동성이 가장 작았습니다. "
+                "반면 W4를 baseline에 포함하면 10개 lot 중 9개에서 "
+                "baseline center가 drift 방향으로 하향 이동하여 "
+                "초기 drift가 정상 기준에 포함될 가능성이 확인되었습니다."
+            )
+        )
+
+
+    else:
+
+        st.info(
+            (
+                "baseline_sensitivity_summary.csv를 "
+                "results/tables 폴더에 추가하면 "
+                "baseline 비교 결과가 여기에 표시됩니다."
+            )
+        )
+
+
+    # ========================================================
+    # Model comparison
+    # ========================================================
+
+    st.markdown("---")
+
+    st.markdown(
+        "### 3. AI 모델 비교"
     )
+
+
+    if len(
+        model_comparison_df
+    ) > 0:
+
+
+        candidate_columns = [
+
+            "model",
+            "roc_auc",
+            "recall",
+            "precision",
+            "specificity",
+            "f1",
+            "false_warning_rate",
+            "warning_rate"
+        ]
+
+
+        available_columns = [
+
+            col
+            for col
+            in candidate_columns
+            if col
+            in model_comparison_df.columns
+        ]
+
+
+        model_show = (
+
+            model_comparison_df[
+                available_columns
+            ]
+            .copy()
+        )
+
+
+        rename_dict = {
+
+            "model":
+                "Model",
+
+            "roc_auc":
+                "ROC-AUC",
+
+            "recall":
+                "Recall",
+
+            "precision":
+                "Precision",
+
+            "specificity":
+                "Specificity",
+
+            "f1":
+                "F1",
+
+            "false_warning_rate":
+                "False warning",
+
+            "warning_rate":
+                "First alarm warning"
+        }
+
+
+        model_show = model_show.rename(
+            columns=
+                rename_dict
+        )
+
+
+        st.dataframe(
+
+            model_show,
+
+            use_container_width=True,
+
+            hide_index=True
+        )
+
+
+        st.info(
+            (
+                "현재 비교에서는 SVM이 전반적인 ROC-AUC와 "
+                "낮은 오경고율에서 우수했고, "
+                "XGBoost는 최초 SPC 이상 사전경고율에서 가장 높았습니다. "
+                "따라서 최종 모델은 threshold 검증까지 수행한 후 확정합니다."
+            )
+        )
+
+
+    else:
+
+        st.info(
+            (
+                "model_comparison_summary.csv를 "
+                "results/tables 폴더에 추가하면 "
+                "모델 비교 결과가 여기에 표시됩니다."
+            )
+        )
+
+
+    # ========================================================
+    # Threshold
+    # ========================================================
+
+    st.markdown("---")
+
+    with st.expander(
+        "Threshold별 성능 비교 보기"
+    ):
+
+
+        threshold_fig = go.Figure()
+
+
+        columns_to_plot = [
+
+            (
+                "recall",
+                "Recall"
+            ),
+
+            (
+                "false_warning_rate",
+                "False warning"
+            ),
+
+            (
+                "first_alarm_warning_rate",
+                "First alarm warning"
+            )
+        ]
+
+
+        for column_name, label in (
+            columns_to_plot
+        ):
+
+
+            if column_name not in (
+                threshold_df.columns
+            ):
+
+                continue
+
+
+            threshold_fig.add_trace(
+                go.Scatter(
+
+                    x=threshold_df[
+                        "threshold"
+                    ],
+
+                    y=threshold_df[
+                        column_name
+                    ],
+
+                    mode=
+                        "lines+markers",
+
+                    name=
+                        label
+                )
+            )
+
+
+        threshold_fig.add_vline(
+
+            x=0.50,
+
+            line_dash="dash",
+
+            annotation_text=
+                "현재 기준 0.50"
+        )
+
+
+        threshold_fig.update_layout(
+
+            xaxis_title=
+                "Warning threshold",
+
+            yaxis_title=
+                "Performance",
+
+            yaxis=dict(
+                range=[
+                    0,
+                    1
+                ],
+                tickformat=".0%"
+            ),
+
+            height=450
+        )
+
+
+        st.plotly_chart(
+
+            threshold_fig,
+
+            use_container_width=True
+        )
 
 
 # ============================================================
@@ -2130,19 +2248,21 @@ Process Explanation
 
 st.markdown("---")
 
+
 st.markdown(
     """
 <div class="disclaimer">
 
-<b>Prototype scope:</b>
-Historical BOSCH plasma-etching data are replayed in wafer order.
-This application is not connected to live fab equipment.
+<b>연구용 Prototype</b><br>
 
-<br>
+본 시스템은 historical BOSCH plasma-etching 데이터를
+wafer 순서대로 재생한 연구용 prototype입니다.
 
-The AI predicts only the immediately following wafer
-(1-step-ahead) and supports engineer review.
-It does not automatically modify process recipes.
+AI는 현재 wafer까지 확보 가능한 정보를 이용해
+바로 다음 wafer 한 장의 SPC 이상 위험만 예측합니다.
+
+AI가 recipe를 자동 변경하지 않으며,
+최종 공정 확인 및 조정 여부는 엔지니어가 판단합니다.
 
 </div>
 """,
