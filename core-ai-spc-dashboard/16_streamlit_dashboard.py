@@ -1,28 +1,12 @@
 # ============================================================
 # 16_streamlit_dashboard.py
-#
 # AI-SPC Process Monitor
-#
-# Simplified exhibition version
-#
-# Main concept:
-#
-# Current wafer
-#      ↓
-# Conventional SPC status
-#      ↓
-# AI predicts NEXT wafer risk
-#      ↓
-# Engineer review
-#
 # ============================================================
-
 
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-
 from pathlib import Path
 
 
@@ -34,95 +18,51 @@ st.set_page_config(
     page_title="AI-SPC Process Monitor",
     page_icon="⚙️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 
 # ============================================================
 # 1. PATH
-#
-# Supports BOTH:
-#
-# Local:
-# core_drift_ai/
-#   app/
-#     16_streamlit_dashboard.py
-#   results/
-#
-# Cloud / alternative:
-# folder/
-#   16_streamlit_dashboard.py
-#   results/
-#
 # ============================================================
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
+# Local:
+# core_drift_ai/
+# ├─ app/
+# │  └─ 16_streamlit_dashboard.py
+# └─ results/
+#
+# Cloud:
+# dashboard_folder/
+# ├─ 16_streamlit_dashboard.py
+# └─ results/
 
-if (
-    SCRIPT_DIR
-    / "results"
-    / "tables"
-).exists():
-
+if (SCRIPT_DIR / "results" / "tables").exists():
     BASE_DIR = SCRIPT_DIR
 
-elif (
-    SCRIPT_DIR.parent
-    / "results"
-    / "tables"
-).exists():
-
+elif (SCRIPT_DIR.parent / "results" / "tables").exists():
     BASE_DIR = SCRIPT_DIR.parent
 
 else:
-
-    # fallback
     BASE_DIR = SCRIPT_DIR
 
 
-TABLE_DIR = (
-    BASE_DIR
-    / "results"
-    / "tables"
-)
+TABLE_DIR = BASE_DIR / "results" / "tables"
 
+SYSTEM_FILE = TABLE_DIR / "final_ai_spc_system.csv"
+METRICS_FILE = TABLE_DIR / "final_evaluation_metrics.csv"
+FIRST_ALARM_FILE = TABLE_DIR / "final_first_alarm_performance.csv"
+THRESHOLD_FILE = TABLE_DIR / "final_threshold_analysis.csv"
+PROCESS_IMPORTANCE_FILE = TABLE_DIR / "shap_process_interpretation.csv"
 
-SYSTEM_FILE = (
-    TABLE_DIR
-    / "final_ai_spc_system.csv"
-)
-
-METRICS_FILE = (
-    TABLE_DIR
-    / "final_evaluation_metrics.csv"
-)
-
-FIRST_ALARM_FILE = (
-    TABLE_DIR
-    / "final_first_alarm_performance.csv"
-)
-
-THRESHOLD_FILE = (
-    TABLE_DIR
-    / "final_threshold_analysis.csv"
-)
-
-PROCESS_IMPORTANCE_FILE = (
-    TABLE_DIR
-    / "shap_process_interpretation.csv"
-)
-
-
-# Optional validation files
 BASELINE_VALIDATION_FILE = (
-    TABLE_DIR
-    / "baseline_sensitivity_summary.csv"
+    TABLE_DIR / "baseline_sensitivity_summary.csv"
 )
 
 MODEL_COMPARISON_FILE = (
-    TABLE_DIR
-    / "model_comparison_summary.csv"
+    TABLE_DIR / "model_comparison_summary.csv"
 )
 
 
@@ -140,9 +80,8 @@ st.markdown(
     max-width: 1450px;
 }
 
-
 /* ==========================================================
-   Header
+   HEADER
 ========================================================== */
 
 .main-title {
@@ -160,14 +99,14 @@ st.markdown(
 
 
 /* ==========================================================
-   Simple step cards
+   BASIC CARD
 ========================================================== */
 
 .step-card {
     border: 1px solid #e5e7eb;
     border-radius: 18px;
     padding: 1.35rem 1.45rem;
-    min-height: 220px;
+    min-height: 230px;
     background: white;
     box-shadow: 0 2px 10px rgba(0,0,0,0.04);
 }
@@ -186,6 +125,89 @@ st.markdown(
     margin-bottom: 0.75rem;
 }
 
+
+/* ==========================================================
+   EARLY WARNING = ORANGE
+========================================================== */
+
+.warning-card {
+    border: 3px solid #f59e0b;
+    border-radius: 18px;
+    padding: 1.35rem 1.45rem;
+    min-height: 230px;
+    background: #fffaf0;
+
+    box-shadow:
+        0 0 0 3px rgba(245,158,11,0.08),
+        0 8px 22px rgba(245,158,11,0.15);
+
+    animation: warningPulse 1.8s infinite;
+}
+
+@keyframes warningPulse {
+    0% {
+        box-shadow:
+            0 0 0 0 rgba(245,158,11,0.20),
+            0 8px 22px rgba(245,158,11,0.12);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 7px rgba(245,158,11,0.07),
+            0 10px 28px rgba(245,158,11,0.20);
+    }
+
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(245,158,11,0.20),
+            0 8px 22px rgba(245,158,11,0.12);
+    }
+}
+
+
+/* ==========================================================
+   SPC ALARM = RED
+========================================================== */
+
+.alarm-card {
+    border: 3px solid #dc2626;
+    border-radius: 18px;
+    padding: 1.35rem 1.45rem;
+    min-height: 230px;
+    background: #fef2f2;
+
+    box-shadow:
+        0 0 0 3px rgba(220,38,38,0.10),
+        0 8px 22px rgba(220,38,38,0.20);
+
+    animation: alarmPulse 1.5s infinite;
+}
+
+@keyframes alarmPulse {
+    0% {
+        box-shadow:
+            0 0 0 0 rgba(220,38,38,0.25),
+            0 8px 22px rgba(220,38,38,0.15);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 7px rgba(220,38,38,0.08),
+            0 10px 28px rgba(220,38,38,0.25);
+    }
+
+    100% {
+        box-shadow:
+            0 0 0 0 rgba(220,38,38,0.25),
+            0 8px 22px rgba(220,38,38,0.15);
+    }
+}
+
+
+/* ==========================================================
+   CURRENT STATUS
+========================================================== */
+
 .big-status {
     font-size: 2rem;
     font-weight: 900;
@@ -193,6 +215,19 @@ st.markdown(
     margin-top: 0.45rem;
     margin-bottom: 0.65rem;
 }
+
+.big-status-alarm {
+    font-size: 2.25rem;
+    font-weight: 950;
+    color: #dc2626 !important;
+    margin-top: 0.45rem;
+    margin-bottom: 0.65rem;
+}
+
+
+/* ==========================================================
+   AI RISK
+========================================================== */
 
 .big-risk {
     font-size: 2.5rem;
@@ -203,15 +238,84 @@ st.markdown(
     margin-bottom: 0.7rem;
 }
 
-.small-description {
-    color: #4b5563;
-    font-size: 0.96rem;
-    line-height: 1.55;
+.big-risk-warning {
+    font-size: 3rem;
+    font-weight: 950;
+    color: #ea580c;
+    line-height: 1;
+    margin-top: 0.4rem;
+    margin-bottom: 0.7rem;
+}
+
+.big-risk-alarm {
+    font-size: 3rem;
+    font-weight: 950;
+    color: #dc2626;
+    line-height: 1;
+    margin-top: 0.4rem;
+    margin-bottom: 0.7rem;
 }
 
 
 /* ==========================================================
-   Badges
+   ENGINEER ACTION
+========================================================== */
+
+.engineer-normal {
+    font-size: 1.55rem;
+    font-weight: 900;
+    color: #111827;
+    margin-top: 0.55rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.25;
+}
+
+.engineer-warning {
+    font-size: 1.55rem;
+    font-weight: 950;
+    color: #ea580c;
+    margin-top: 0.55rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.25;
+}
+
+.engineer-alarm {
+    font-size: 1.65rem;
+    font-weight: 950;
+    color: #dc2626;
+    margin-top: 0.55rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.25;
+}
+
+
+/* ==========================================================
+   DESCRIPTION
+========================================================== */
+
+.small-description {
+    color: #4b5563;
+    font-size: 0.94rem;
+    line-height: 1.5;
+}
+
+.warning-description {
+    color: #9a3412;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.alarm-description {
+    color: #991b1b;
+    font-size: 0.88rem;
+    font-weight: 650;
+    line-height: 1.45;
+}
+
+
+/* ==========================================================
+   BADGES
 ========================================================== */
 
 .badge-normal {
@@ -225,25 +329,58 @@ st.markdown(
 
 .badge-warning {
     display: inline-block;
-    padding: 0.45rem 0.9rem;
+    padding: 0.5rem 1rem;
     border-radius: 999px;
     background: #ffedd5;
     color: #c2410c;
-    font-weight: 800;
+    border: 1px solid #f59e0b;
+    font-weight: 900;
+    font-size: 1.05rem;
 }
 
 .badge-alarm {
     display: inline-block;
-    padding: 0.45rem 0.9rem;
+    padding: 0.5rem 1rem;
     border-radius: 999px;
     background: #fee2e2;
-    color: #b91c1c;
-    font-weight: 800;
+    color: #dc2626;
+    border: 1px solid #ef4444;
+    font-weight: 950;
+    font-size: 1.05rem;
 }
 
 
 /* ==========================================================
-   Section
+   BANNERS
+========================================================== */
+
+.warning-banner {
+    border: 2px solid #f59e0b;
+    background: #fff7ed;
+    color: #9a3412;
+    padding: 1rem 1.2rem;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 750;
+    margin-top: 0.8rem;
+    margin-bottom: 0.7rem;
+}
+
+.alarm-banner {
+    border: 2px solid #ef4444;
+    background: #fef2f2;
+    color: #b91c1c;
+    padding: 1rem 1.2rem;
+    border-radius: 14px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin-top: 0.8rem;
+    margin-bottom: 0.7rem;
+}
+
+
+/* ==========================================================
+   SECTION
 ========================================================== */
 
 .section-title {
@@ -256,36 +393,7 @@ st.markdown(
 
 
 /* ==========================================================
-   Result boxes
-========================================================== */
-
-.result-success {
-    border: 1px solid #bbf7d0;
-    background: #f0fdf4;
-    border-radius: 15px;
-    padding: 1.2rem;
-    font-size: 1.05rem;
-}
-
-.result-warning {
-    border: 1px solid #fed7aa;
-    background: #fff7ed;
-    border-radius: 15px;
-    padding: 1.2rem;
-    font-size: 1.05rem;
-}
-
-.result-error {
-    border: 1px solid #fecaca;
-    background: #fef2f2;
-    border-radius: 15px;
-    padding: 1.2rem;
-    font-size: 1.05rem;
-}
-
-
-/* ==========================================================
-   Contributor card
+   CONTRIBUTOR
 ========================================================== */
 
 .contributor-card {
@@ -311,7 +419,7 @@ st.markdown(
 
 
 /* ==========================================================
-   Disclaimer
+   FOOTER
 ========================================================== */
 
 .disclaimer {
@@ -322,34 +430,29 @@ st.markdown(
 
 </style>
 """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
 # ============================================================
-# 3. SAFE FILE CHECK
+# 3. FILE CHECK
 # ============================================================
 
 required_files = [
-
     SYSTEM_FILE,
     METRICS_FILE,
     FIRST_ALARM_FILE,
     THRESHOLD_FILE,
-    PROCESS_IMPORTANCE_FILE
+    PROCESS_IMPORTANCE_FILE,
 ]
 
-
 missing_files = [
-
     file
-    for file
-    in required_files
+    for file in required_files
     if not file.exists()
 ]
 
-
-if len(missing_files) > 0:
+if missing_files:
 
     st.error(
         "Dashboard data files could not be found."
@@ -357,7 +460,7 @@ if len(missing_files) > 0:
 
     st.write(
         "Detected base directory:",
-        str(BASE_DIR)
+        str(BASE_DIR),
     )
 
     st.write(
@@ -365,10 +468,7 @@ if len(missing_files) > 0:
     )
 
     for file in missing_files:
-
-        st.code(
-            str(file)
-        )
+        st.code(str(file))
 
     st.stop()
 
@@ -401,10 +501,6 @@ def load_data():
     )
 
 
-    # --------------------------------------------------------
-    # Optional validation data
-    # --------------------------------------------------------
-
     if BASELINE_VALIDATION_FILE.exists():
 
         baseline_validation_df = pd.read_csv(
@@ -427,15 +523,9 @@ def load_data():
         model_comparison_df = pd.DataFrame()
 
 
-    # --------------------------------------------------------
-    # Boolean normalization
-    # --------------------------------------------------------
-
     bool_columns = [
-
         "ai_warning",
-
-        "successful_first_alarm_one_step_warning"
+        "successful_first_alarm_one_step_warning",
     ]
 
 
@@ -444,34 +534,26 @@ def load_data():
         if column in system_df.columns:
 
             system_df[column] = (
-
                 system_df[column]
                 .astype(str)
                 .str.lower()
                 .map(
                     {
                         "true": True,
-                        "false": False
+                        "false": False,
                     }
                 )
             )
 
 
     return (
-
         system_df,
-
         metrics_df,
-
         first_alarm_df,
-
         threshold_df,
-
         process_importance_df,
-
         baseline_validation_df,
-
-        model_comparison_df
+        model_comparison_df,
     )
 
 
@@ -482,7 +564,7 @@ def load_data():
     threshold_df,
     process_importance_df,
     baseline_validation_df,
-    model_comparison_df
+    model_comparison_df,
 ) = load_data()
 
 
@@ -492,54 +574,35 @@ def load_data():
 
 def get_metric(
     metric_name,
-    default=np.nan
+    default=np.nan,
 ):
 
-    row = (
-
-        metrics_df[
-            metrics_df[
-                "metric"
-            ]
-            == metric_name
-        ]
-
-    )
-
+    row = metrics_df[
+        metrics_df["metric"]
+        == metric_name
+    ]
 
     if len(row) == 0:
-
         return default
 
-
     return float(
-        row
-        .iloc[0][
-            "value"
-        ]
+        row.iloc[0]["value"]
     )
 
 
-def clean_process_name(
-    name
-):
+def clean_process_name(name):
 
     if pd.isna(name):
-
         return "-"
-
 
     clean = str(name)
 
-
     clean = clean.replace(
         "current_",
-        ""
+        "",
     )
 
-
     replacements = {
-
         "HeliumBPFlow":
             "Helium BP Flow",
 
@@ -568,45 +631,40 @@ def clean_process_name(
             "Source RF Load Power",
 
         "Pressure":
-            "Chamber Pressure"
+            "Chamber Pressure",
     }
-
 
     for old, new in replacements.items():
 
         clean = clean.replace(
             old,
-            new
+            new,
         )
-
 
     clean = clean.replace(
         "_mean",
-        " (mean)"
+        " (mean)",
     )
 
     clean = clean.replace(
         "_std",
-        " (variation)"
+        " (variation)",
     )
 
     clean = clean.replace(
         "_min",
-        " (minimum)"
+        " (minimum)",
     )
 
     clean = clean.replace(
         "_max",
-        " (maximum)"
+        " (maximum)",
     )
-
 
     return clean
 
 
-def simple_status_badge(
-    status
-):
+def simple_status_badge(status):
 
     if status == "NORMAL":
 
@@ -616,7 +674,6 @@ def simple_status_badge(
             '</span>'
         )
 
-
     if status == "EARLY WARNING":
 
         return (
@@ -625,22 +682,18 @@ def simple_status_badge(
             '</span>'
         )
 
-
     if status == "SPC ALARM":
 
         return (
             '<span class="badge-alarm">'
-            '● SPC 이상'
+            '🚨 SPC ALARM'
             '</span>'
         )
-
 
     return str(status)
 
 
-def result_text(
-    result
-):
+def result_text(result):
 
     if result == "TRUE EARLY WARNING":
 
@@ -648,13 +701,11 @@ def result_text(
             "✅ AI가 실제 이상을 사전에 경고했습니다."
         )
 
-
     if result == "FALSE EARLY WARNING":
 
         return (
             "⚠️ AI가 경고했지만 실제 다음 wafer는 정상이었습니다."
         )
-
 
     if result == "MISSED EARLY WARNING":
 
@@ -662,17 +713,13 @@ def result_text(
             "❌ AI가 위험을 놓쳤고 실제 다음 wafer에서 이상이 발생했습니다."
         )
 
-
     if result == "CORRECT NORMAL":
 
         return (
             "✅ AI가 정상으로 판단했고 실제 다음 wafer도 정상이었습니다."
         )
 
-
-    return str(
-        result
-    )
+    return str(result)
 
 
 # ============================================================
@@ -685,23 +732,16 @@ st.sidebar.markdown(
 
 
 page = st.sidebar.radio(
-
     "화면 선택",
-
     [
-
         "📡 Live Monitor",
-
         "📈 Lot Timeline",
-
-        "🔬 Model Validation"
-    ]
+        "🔬 Model Validation",
+    ],
 )
 
 
-st.sidebar.markdown(
-    "---"
-)
+st.sidebar.markdown("---")
 
 
 st.sidebar.markdown(
@@ -749,7 +789,7 @@ AI–SPC Process Monitor
 현재 wafer의 공정 정보를 이용해 바로 다음 wafer의 SPC 이상 위험을 예측하는 사전경고 시스템
 </div>
 """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
 
 
@@ -761,14 +801,14 @@ if page == "📡 Live Monitor":
 
 
     # ========================================================
-    # Selector
+    # SELECTOR
     # ========================================================
 
     select1, select2, select3 = st.columns(
         [
             1,
             1,
-            2
+            2,
         ]
     )
 
@@ -776,8 +816,7 @@ if page == "📡 Live Monitor":
     lot_list = sorted(
         system_df[
             "lot_number"
-        ]
-        .unique()
+        ].unique()
     )
 
 
@@ -785,29 +824,23 @@ if page == "📡 Live Monitor":
 
         selected_lot = st.selectbox(
             "Lot 선택",
-            lot_list
+            lot_list,
         )
 
 
     lot_df = (
-
         system_df[
-            system_df[
-                "lot_number"
-            ]
+            system_df["lot_number"]
             == selected_lot
         ]
-
         .sort_values(
             "current_wafer"
         )
-
         .copy()
     )
 
 
     wafer_list = (
-
         lot_df[
             "current_wafer"
         ]
@@ -819,30 +852,22 @@ if page == "📡 Live Monitor":
     with select2:
 
         selected_current_wafer = st.selectbox(
-
             "현재 Wafer",
-
-            wafer_list
+            wafer_list,
         )
 
 
     selected_row = (
-
         lot_df[
-            lot_df[
-                "current_wafer"
-            ]
+            lot_df["current_wafer"]
             == selected_current_wafer
         ]
-
         .iloc[0]
     )
 
 
     next_wafer = int(
-        selected_row[
-            "next_wafer"
-        ]
+        selected_row["next_wafer"]
     )
 
 
@@ -863,7 +888,7 @@ Lot {int(selected_lot)}
 다음 W{next_wafer} 예측
 </div>
 """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
 
@@ -871,7 +896,7 @@ Lot {int(selected_lot)}
 
 
     # ========================================================
-    # MAIN 3-STEP FLOW
+    # CURRENT DATA
     # ========================================================
 
     current_spc_status = str(
@@ -895,27 +920,166 @@ Lot {int(selected_lot)}
     )
 
 
-    card1, arrow1, card2, arrow2, card3 = st.columns(
+    # ========================================================
+    # STYLE SELECTION
+    # ========================================================
 
+    if current_spc_status == "SPC ALARM":
+
+        card1_class = "alarm-card"
+
+        current_status_class = (
+            "big-status-alarm"
+        )
+
+        current_status_display = (
+            "🚨 ALARM"
+        )
+
+    else:
+
+        card1_class = "step-card"
+
+        current_status_class = (
+            "big-status"
+        )
+
+        current_status_display = (
+            simple_status_badge(
+                current_spc_status
+            )
+        )
+
+
+    if system_status == "EARLY WARNING":
+
+        card2_class = (
+            "warning-card"
+        )
+
+        risk_class = (
+            "big-risk-warning"
+        )
+
+        step2_description_class = (
+            "warning-description"
+        )
+
+
+    elif system_status == "SPC ALARM":
+
+        card2_class = (
+            "alarm-card"
+        )
+
+        risk_class = (
+            "big-risk-alarm"
+        )
+
+        step2_description_class = (
+            "alarm-description"
+        )
+
+
+    else:
+
+        card2_class = (
+            "step-card"
+        )
+
+        risk_class = (
+            "big-risk"
+        )
+
+        step2_description_class = (
+            "small-description"
+        )
+
+
+    if system_status == "EARLY WARNING":
+
+        card3_class = (
+            "warning-card"
+        )
+
+        engineer_class = (
+            "engineer-warning"
+        )
+
+        description_class = (
+            "warning-description"
+        )
+
+
+    elif system_status == "SPC ALARM":
+
+        card3_class = (
+            "alarm-card"
+        )
+
+        engineer_class = (
+            "engineer-alarm"
+        )
+
+        description_class = (
+            "alarm-description"
+        )
+
+
+    else:
+
+        card3_class = (
+            "step-card"
+        )
+
+        engineer_class = (
+            "engineer-normal"
+        )
+
+        description_class = (
+            "small-description"
+        )
+
+
+    # ========================================================
+    # MAIN 3 STEP FLOW
+    # ========================================================
+
+    card1, arrow1, card2, arrow2, card3 = st.columns(
         [
             4,
             0.55,
             4,
             0.55,
-            4
+            4,
         ]
     )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # STEP 1
-    # --------------------------------------------------------
+    # ========================================================
 
     with card1:
 
+        if current_spc_status == "SPC ALARM":
+
+            current_description = (
+                "현재 wafer가 SPC 관리한계를 벗어났습니다. "
+                "공정 상태 확인이 필요합니다."
+            )
+
+        else:
+
+            current_description = (
+                "현재 wafer의 실제 측정 결과를 "
+                "기존 SPC 기준으로 확인합니다."
+            )
+
+
         st.markdown(
             f"""
-<div class="step-card">
+<div class="{card1_class}">
 
 <div class="step-number">
 STEP 1
@@ -925,29 +1089,35 @@ STEP 1
 현재 공정 상태
 </div>
 
-<div class="big-status">
-{simple_status_badge(current_spc_status)}
+<div class="{current_status_class}">
+{current_status_display}
 </div>
 
 <div class="small-description">
 
-현재 W{int(selected_current_wafer)}의
-평균 식각 깊이:
-
-<b>{selected_row['current_mean_si_etch']:.3f}</b>
+현재 W{int(selected_current_wafer)}의 평균 식각 깊이:
 
 <br><br>
 
-현재 wafer의 실제 측정 결과를
-기존 SPC 기준으로 확인합니다.
+<b>
+{selected_row['current_mean_si_etch']:.3f}
+</b>
+
+<br><br>
+
+{current_description}
 
 </div>
 
 </div>
 """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
+
+    # ========================================================
+    # ARROW 1
+    # ========================================================
 
     with arrow1:
 
@@ -962,13 +1132,13 @@ color:#9ca3af;
 →
 </div>
 """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # STEP 2
-    # --------------------------------------------------------
+    # ========================================================
 
     with card2:
 
@@ -995,7 +1165,7 @@ color:#9ca3af;
 
         st.markdown(
             f"""
-<div class="step-card">
+<div class="{card2_class}">
 
 <div class="step-number">
 STEP 2
@@ -1005,7 +1175,7 @@ STEP 2
 AI 다음 Wafer 예측
 </div>
 
-<div class="big-risk">
+<div class="{risk_class}">
 {risk:.0%}
 </div>
 
@@ -1015,15 +1185,19 @@ AI 다음 Wafer 예측
 
 <br>
 
-<div class="small-description">
+<div class="{step2_description_class}">
 {prediction_text}
 </div>
 
 </div>
 """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
+
+    # ========================================================
+    # ARROW 2
+    # ========================================================
 
     with arrow2:
 
@@ -1038,41 +1212,50 @@ color:#9ca3af;
 →
 </div>
 """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
 
-    # --------------------------------------------------------
+    # ========================================================
     # STEP 3
-    # --------------------------------------------------------
+    # ========================================================
 
     with card3:
-
 
         if system_status == "EARLY WARNING":
 
             action_title = (
-                "👨‍🔧 엔지니어 확인 필요"
+                '<span style="white-space:nowrap;">'
+                '⚠ 엔지니어'
+                '</span>'
+                '<br>'
+                '<span style="white-space:nowrap;">'
+                '확인 필요'
+                '</span>'
             )
 
             action_description = (
-                "AI가 위험 신호를 감지했습니다. "
-                "주요 공정 센서를 확인한 뒤 "
-                "공정 조정 여부를 엔지니어가 결정합니다."
+                "AI가 다음 wafer의 위험 신호를 감지했습니다. "
+                "주요 공정 센서를 확인한 뒤 공정 조정 여부를 "
+                "엔지니어가 결정합니다."
             )
-
 
         elif system_status == "SPC ALARM":
 
             action_title = (
-                "🚨 SPC 이상 확인"
+                '<span style="white-space:nowrap;">'
+                '🚨 즉시 공정'
+                '</span>'
+                '<br>'
+                '<span style="white-space:nowrap;">'
+                '확인 필요'
+                '</span>'
             )
 
             action_description = (
                 "기존 SPC가 이미 이상을 감지했습니다. "
                 "엔지니어의 공정 점검이 필요합니다."
             )
-
 
         else:
 
@@ -1088,7 +1271,7 @@ color:#9ca3af;
 
         st.markdown(
             f"""
-<div class="step-card">
+<div class="{card3_class}">
 
 <div class="step-number">
 STEP 3
@@ -1098,71 +1281,91 @@ STEP 3
 최종 판단
 </div>
 
-<div style="
-font-size:1.55rem;
-font-weight:900;
-margin-top:0.6rem;
-margin-bottom:1rem;
-">
+<div class="{engineer_class}">
 {action_title}
 </div>
 
-<div class="small-description">
+<div class="{description_class}">
 {action_description}
 </div>
 
 </div>
 """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
 
     # ========================================================
-    # SIMPLE MESSAGE
+    # SUMMARY BANNER
     # ========================================================
-
-    st.markdown(
-        """
-<div class="section-title">
-이 화면이 의미하는 것은?
-</div>
-""",
-        unsafe_allow_html=True
-    )
-
 
     if (
         current_spc_status == "NORMAL"
-        and
-        system_status == "EARLY WARNING"
+        and system_status == "EARLY WARNING"
     ):
 
-        st.warning(
-            (
-                f"현재 W{int(selected_current_wafer)}는 "
-                f"SPC 기준으로 정상입니다. "
-                f"하지만 AI는 다음 W{next_wafer}의 "
-                f"이상 위험을 {risk:.0%}로 예측하여 "
-                f"사전 경고를 발생시켰습니다."
-            )
+        st.markdown(
+            f"""
+<div class="warning-banner">
+
+⚠ <b>AI EARLY WARNING</b>
+&nbsp;&nbsp;|&nbsp;&nbsp;
+
+현재 W{int(selected_current_wafer)}는 SPC 기준 정상
+
+&nbsp;&nbsp;→&nbsp;&nbsp;
+
+다음 W{next_wafer} 이상 위험
+
+<span style="
+font-size:1.35rem;
+font-weight:950;
+color:#ea580c;
+">
+{risk:.0%}
+</span>
+
+&nbsp;&nbsp;→&nbsp;&nbsp;
+
+<b>엔지니어 확인 필요</b>
+
+</div>
+""",
+            unsafe_allow_html=True,
         )
 
 
-    elif system_status == "NORMAL":
+    elif current_spc_status == "SPC ALARM":
 
-        st.success(
-            (
-                f"현재 W{int(selected_current_wafer)}도 정상이고, "
-                f"AI 역시 다음 W{next_wafer}의 위험을 "
-                f"낮게 평가했습니다."
-            )
+        st.markdown(
+            f"""
+<div class="alarm-banner">
+
+🚨 <b>SPC ALARM</b>
+
+&nbsp;&nbsp;|&nbsp;&nbsp;
+
+현재 W{int(selected_current_wafer)}가
+SPC 관리한계를 벗어났습니다.
+
+&nbsp;&nbsp;→&nbsp;&nbsp;
+
+<b>즉시 공정 상태 확인 필요</b>
+
+</div>
+""",
+            unsafe_allow_html=True,
         )
 
 
     else:
 
-        st.error(
-            "현재 conventional SPC가 이미 이상 상태를 감지했습니다."
+        st.success(
+            (
+                f"현재 W{int(selected_current_wafer)}는 정상이며, "
+                f"AI 역시 다음 W{next_wafer}의 위험을 "
+                f"낮게 평가했습니다."
+            )
         )
 
 
@@ -1173,11 +1376,6 @@ margin-bottom:1rem;
     with st.expander(
         "🔎 상세 분석 보기"
     ):
-
-
-        # ----------------------------------------------------
-        # SPC details
-        # ----------------------------------------------------
 
         st.markdown(
             "### 기존 SPC 기준"
@@ -1191,31 +1389,27 @@ margin-bottom:1rem;
 
         spc1.metric(
             "현재 식각 깊이",
-            f"{selected_row['current_mean_si_etch']:.3f}"
+            f"{selected_row['current_mean_si_etch']:.3f}",
         )
 
 
         spc2.metric(
             "LCL",
-            f"{selected_row['LCL']:.3f}"
+            f"{selected_row['LCL']:.3f}",
         )
 
 
         spc3.metric(
             "Center Line",
-            f"{selected_row['CL']:.3f}"
+            f"{selected_row['CL']:.3f}",
         )
 
 
         spc4.metric(
             "UCL",
-            f"{selected_row['UCL']:.3f}"
+            f"{selected_row['UCL']:.3f}",
         )
 
-
-        # ----------------------------------------------------
-        # Contributor explanation
-        # ----------------------------------------------------
 
         st.markdown(
             "### AI 판단에 기여한 주요 공정 신호"
@@ -1229,19 +1423,16 @@ margin-bottom:1rem;
 
         for rank in range(
             1,
-            4
+            4,
         ):
-
 
             process_name = selected_row[
                 f"top{rank}_process"
             ]
 
-
             process_value = selected_row[
                 f"top{rank}_value"
             ]
-
 
             process_shap_value = selected_row[
                 f"top{rank}_shap"
@@ -1252,7 +1443,6 @@ margin-bottom:1rem;
                 rank - 1
             ]:
 
-
                 if pd.isna(
                     process_name
                 ):
@@ -1260,7 +1450,6 @@ margin-bottom:1rem;
                     st.info(
                         "표시할 공정 변수가 없습니다."
                     )
-
 
                 else:
 
@@ -1286,15 +1475,14 @@ AI 기여도:
 
 </div>
 """,
-                        unsafe_allow_html=True
+                        unsafe_allow_html=True,
                     )
 
 
         st.caption(
             (
                 "SHAP은 AI가 어떤 공정 신호를 중요하게 사용했는지 "
-                "설명하는 지표입니다. "
-                "해당 변수가 실제 이상 원인이라는 뜻은 아닙니다."
+                "설명합니다. 해당 변수가 실제 이상 원인이라는 뜻은 아닙니다."
             )
         )
 
@@ -1307,12 +1495,10 @@ AI 기여도:
         "🧪 실제 다음 Wafer 결과 확인"
     ):
 
-
         st.caption(
             (
-                "이 정보는 실제 예측 시점에는 알 수 없습니다. "
-                "연구에서 AI 예측이 맞았는지 확인하기 위한 "
-                "사후 검증 결과입니다."
+                "다음 wafer 결과는 실제 예측 시점에는 알 수 없습니다. "
+                "연구에서 AI 예측이 맞았는지 확인하기 위한 사후 검증입니다."
             )
         )
 
@@ -1340,7 +1526,7 @@ AI 기여도:
 
             st.metric(
                 f"실제 W{next_wafer} 식각 깊이",
-                f"{selected_row['next_actual_mean_si_etch']:.3f}"
+                f"{selected_row['next_actual_mean_si_etch']:.3f}",
             )
 
 
@@ -1352,7 +1538,7 @@ AI 기여도:
             if actual_status == "SPC VIOLATION":
 
                 st.error(
-                    "🔴 SPC 이상 발생"
+                    "🚨 SPC 이상 발생"
                 )
 
             else:
@@ -1380,20 +1566,17 @@ AI 기여도:
                     result_message
                 )
 
-
             elif warning_result == "FALSE EARLY WARNING":
 
                 st.warning(
                     result_message
                 )
 
-
             elif warning_result == "MISSED EARLY WARNING":
 
                 st.error(
                     result_message
                 )
-
 
             else:
 
@@ -1410,8 +1593,7 @@ AI 기여도:
 
             st.success(
                 (
-                    f"🎯 이 사례에서는 AI가 W"
-                    f"{int(selected_current_wafer)} 시점에서 "
+                    f"🎯 AI가 W{int(selected_current_wafer)} 시점에서 "
                     f"W{next_wafer} 위험을 경고했고, "
                     f"실제로 W{next_wafer}에서 "
                     f"최초 SPC 이상이 발생했습니다."
@@ -1425,14 +1607,13 @@ AI 기여도:
 
 elif page == "📈 Lot Timeline":
 
-
     st.markdown(
         """
 <div class="section-title">
 Lot 전체 흐름
 </div>
 """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 
@@ -1447,40 +1628,33 @@ Lot 전체 흐름
     lot_list = sorted(
         system_df[
             "lot_number"
-        ]
-        .unique()
+        ].unique()
     )
 
 
     selected_lot = st.selectbox(
-
         "Lot 선택",
-
         lot_list,
-
-        key="timeline_lot"
+        key="timeline_lot",
     )
 
 
     lot_df = (
-
         system_df[
             system_df[
                 "lot_number"
             ]
             == selected_lot
         ]
-
         .sort_values(
             "next_wafer"
         )
-
         .copy()
     )
 
 
     # ========================================================
-    # Risk curve
+    # RISK CHART
     # ========================================================
 
     fig = go.Figure()
@@ -1488,41 +1662,28 @@ Lot 전체 흐름
 
     fig.add_trace(
         go.Scatter(
-
             x=lot_df[
                 "next_wafer"
             ],
-
             y=lot_df[
                 "predicted_risk"
             ],
-
-            mode=
-                "lines+markers",
-
-            name=
-                "AI 위험도",
-
-            hovertemplate=
-                (
-                    "예측 대상 W%{x}"
-                    "<br>"
-                    "위험도 %{y:.1%}"
-                    "<extra></extra>"
-                )
+            mode="lines+markers",
+            name="AI 위험도",
+            hovertemplate=(
+                "예측 대상 W%{x}"
+                "<br>"
+                "위험도 %{y:.1%}"
+                "<extra></extra>"
+            ),
         )
     )
 
 
     fig.add_hline(
-
         y=0.50,
-
-        line_dash=
-            "dash",
-
-        annotation_text=
-            "사전경고 기준 50%"
+        line_dash="dash",
+        annotation_text="사전경고 기준 50%",
     )
 
 
@@ -1534,31 +1695,22 @@ Lot 전체 흐름
     ]
 
 
-    if len(
-        warning_rows
-    ) > 0:
+    if len(warning_rows) > 0:
 
         fig.add_trace(
             go.Scatter(
-
                 x=warning_rows[
                     "next_wafer"
                 ],
-
                 y=warning_rows[
                     "predicted_risk"
                 ],
-
                 mode="markers",
-
                 marker=dict(
-                    size=15,
-                    symbol=
-                        "triangle-up"
+                    size=16,
+                    symbol="triangle-up",
                 ),
-
-                name=
-                    "AI 사전경고"
+                name="AI 사전경고",
             )
         )
 
@@ -1571,87 +1723,55 @@ Lot 전체 흐름
     ]
 
 
-    if len(
-        first_alarm_rows
-    ) > 0:
+    if len(first_alarm_rows) > 0:
 
         first_alarm_wafer = int(
-
             first_alarm_rows[
                 "next_wafer"
-            ]
-            .iloc[0]
+            ].iloc[0]
         )
 
 
         fig.add_vline(
-
-            x=
-                first_alarm_wafer,
-
-            line_dash=
-                "dot",
-
-            annotation_text=
-                (
-                    f"최초 SPC 이상 W"
-                    f"{first_alarm_wafer}"
-                )
+            x=first_alarm_wafer,
+            line_dash="dot",
+            annotation_text=(
+                f"최초 SPC 이상 W"
+                f"{first_alarm_wafer}"
+            ),
         )
 
 
     fig.update_layout(
-
-        title=
-            (
-                f"Lot {int(selected_lot)} "
-                "— 다음 Wafer AI 위험도"
-            ),
-
-        xaxis_title=
-            "예측 대상 Wafer",
-
-        yaxis_title=
-            "AI 위험도",
-
+        title=(
+            f"Lot {int(selected_lot)} "
+            "— 다음 Wafer AI 위험도"
+        ),
+        xaxis_title="예측 대상 Wafer",
+        yaxis_title="AI 위험도",
         yaxis=dict(
             range=[
                 0,
-                1
+                1,
             ],
-            tickformat=".0%"
+            tickformat=".0%",
         ),
-
         height=480,
-
-        hovermode="x unified"
+        hovermode="x unified",
     )
 
 
     st.plotly_chart(
-
         fig,
-
-        use_container_width=True
+        use_container_width=True,
     )
 
 
     # ========================================================
-    # Simple event summary
+    # EVENT SUMMARY
     # ========================================================
 
-    first_alarm_rows = lot_df[
-        lot_df[
-            "next_first_spc_alarm"
-        ]
-        == 1
-    ]
-
-
-    if len(
-        first_alarm_rows
-    ) > 0:
-
+    if len(first_alarm_rows) > 0:
 
         first_row = (
             first_alarm_rows
@@ -1700,7 +1820,6 @@ Lot 전체 흐름
                 )
             )
 
-
         else:
 
             st.warning(
@@ -1711,7 +1830,6 @@ Lot 전체 흐름
                     f"{risk_value:.0%}로 사전경고 기준에 미달했습니다."
                 )
             )
-
 
     else:
 
@@ -1725,16 +1843,14 @@ Lot 전체 흐름
 
 
     # ========================================================
-    # Detailed timeline
+    # DETAIL TABLE
     # ========================================================
 
     with st.expander(
         "📋 상세 Lot 데이터 보기"
     ):
 
-
         display_df = (
-
             lot_df[
                 [
                     "current_wafer",
@@ -1743,10 +1859,9 @@ Lot 전체 흐름
                     "predicted_risk",
                     "system_status",
                     "next_actual_status",
-                    "warning_result"
+                    "warning_result",
                 ]
             ]
-
             .copy()
         )
 
@@ -1754,11 +1869,9 @@ Lot 전체 흐름
         display_df[
             "predicted_risk"
         ] = (
-
             display_df[
                 "predicted_risk"
             ]
-
             .map(
                 lambda x:
                     f"{x:.1%}"
@@ -1768,7 +1881,6 @@ Lot 전체 흐름
 
         display_df = display_df.rename(
             columns={
-
                 "current_wafer":
                     "현재 Wafer",
 
@@ -1788,18 +1900,15 @@ Lot 전체 흐름
                     "실제 다음 결과",
 
                 "warning_result":
-                    "평가"
+                    "평가",
             }
         )
 
 
         st.dataframe(
-
             display_df,
-
             use_container_width=True,
-
-            hide_index=True
+            hide_index=True,
         )
 
 
@@ -1809,14 +1918,13 @@ Lot 전체 흐름
 
 elif page == "🔬 Model Validation":
 
-
     st.markdown(
         """
 <div class="section-title">
 모델 검증 결과
 </div>
 """,
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 
 
@@ -1829,7 +1937,7 @@ elif page == "🔬 Model Validation":
 
 
     # ========================================================
-    # Main performance
+    # 1. CURRENT PERFORMANCE
     # ========================================================
 
     st.markdown(
@@ -1868,54 +1976,47 @@ elif page == "🔬 Model Validation":
 
 
     metrics_values = [
-
         (
             "이상 탐지율",
             recall,
-            "%"
+            "%",
         ),
-
         (
             "경고 정확도",
             precision,
-            "%"
+            "%",
         ),
-
         (
             "정상 판별률",
             specificity,
-            "%"
+            "%",
         ),
-
         (
             "ROC-AUC",
             roc_auc,
-            ""
+            "",
         ),
-
         (
             "오경고율",
             false_warning_rate,
-            "%"
+            "%",
         ),
-
         (
             "최초 이상 사전경고",
             first_warning_rate,
-            "%"
-        )
+            "%",
+        ),
     ]
 
 
     for column, (
         label,
         value,
-        kind
+        kind,
     ) in zip(
         metrics_cols,
-        metrics_values
+        metrics_values,
     ):
-
 
         if kind == "%":
 
@@ -1934,24 +2035,16 @@ elif page == "🔬 Model Validation":
 
             st.metric(
                 label,
-                display_value
+                display_value,
             )
 
 
-    st.caption(
-        (
-            "현재 메인 시스템의 기존 보고 성능을 표시합니다. "
-            "모델 비교와 threshold 재선정 결과에 따라 "
-            "추후 최종 성능은 변경될 수 있습니다."
-        )
-    )
-
-
     # ========================================================
-    # Baseline validation
+    # 2. BASELINE VALIDATION
     # ========================================================
 
     st.markdown("---")
+
 
     st.markdown(
         "### 2. 왜 W1~W3를 SPC baseline으로 사용했나?"
@@ -1962,14 +2055,13 @@ elif page == "🔬 Model Validation":
         baseline_validation_df
     ) > 0:
 
-
         baseline_show = (
             baseline_validation_df[
                 [
                     "baseline_definition",
                     "pooled_sigma",
                     "three_sigma_half_width",
-                    "lots_with_spc_alarm"
+                    "lots_with_spc_alarm",
                 ]
             ]
             .copy()
@@ -1978,7 +2070,6 @@ elif page == "🔬 Model Validation":
 
         baseline_show = baseline_show.rename(
             columns={
-
                 "baseline_definition":
                     "Baseline",
 
@@ -1989,47 +2080,42 @@ elif page == "🔬 Model Validation":
                     "±3σ 폭",
 
                 "lots_with_spc_alarm":
-                    "SPC alarm Lot"
+                    "SPC alarm Lot",
             }
         )
 
 
         st.dataframe(
-
             baseline_show,
-
             use_container_width=True,
-
-            hide_index=True
+            hide_index=True,
         )
 
 
         st.success(
             (
                 "W1~W3에서 pooled σ와 lot 간 baseline 변동성이 가장 작았습니다. "
-                "반면 W4를 baseline에 포함하면 10개 lot 중 9개에서 "
-                "baseline center가 drift 방향으로 하향 이동하여 "
-                "초기 drift가 정상 기준에 포함될 가능성이 확인되었습니다."
+                "반면 W4를 포함하면 10개 lot 중 9개에서 baseline center가 "
+                "drift 방향으로 하향 이동했습니다."
             )
         )
-
 
     else:
 
         st.info(
             (
                 "baseline_sensitivity_summary.csv를 "
-                "results/tables 폴더에 추가하면 "
-                "baseline 비교 결과가 여기에 표시됩니다."
+                "results/tables 폴더에 추가하면 결과가 표시됩니다."
             )
         )
 
 
     # ========================================================
-    # Model comparison
+    # 3. MODEL COMPARISON
     # ========================================================
 
     st.markdown("---")
+
 
     st.markdown(
         "### 3. AI 모델 비교"
@@ -2040,9 +2126,7 @@ elif page == "🔬 Model Validation":
         model_comparison_df
     ) > 0:
 
-
         candidate_columns = [
-
             "model",
             "roc_auc",
             "recall",
@@ -2050,22 +2134,18 @@ elif page == "🔬 Model Validation":
             "specificity",
             "f1",
             "false_warning_rate",
-            "warning_rate"
+            "warning_rate",
         ]
 
 
         available_columns = [
-
             col
-            for col
-            in candidate_columns
-            if col
-            in model_comparison_df.columns
+            for col in candidate_columns
+            if col in model_comparison_df.columns
         ]
 
 
         model_show = (
-
             model_comparison_df[
                 available_columns
             ]
@@ -2074,7 +2154,6 @@ elif page == "🔬 Model Validation":
 
 
         rename_dict = {
-
             "model":
                 "Model",
 
@@ -2097,148 +2176,116 @@ elif page == "🔬 Model Validation":
                 "False warning",
 
             "warning_rate":
-                "First alarm warning"
+                "First alarm warning",
         }
 
 
         model_show = model_show.rename(
-            columns=
-                rename_dict
+            columns=rename_dict
         )
 
 
         st.dataframe(
-
             model_show,
-
             use_container_width=True,
-
-            hide_index=True
+            hide_index=True,
         )
 
 
         st.info(
             (
-                "현재 비교에서는 SVM이 전반적인 ROC-AUC와 "
-                "낮은 오경고율에서 우수했고, "
-                "XGBoost는 최초 SPC 이상 사전경고율에서 가장 높았습니다. "
-                "따라서 최종 모델은 threshold 검증까지 수행한 후 확정합니다."
+                "현재 비교에서는 SVM이 전반적 판별력과 낮은 오경고율에서 "
+                "우수했고, XGBoost는 최초 SPC 이상 사전경고율에서 가장 높았습니다."
             )
         )
-
 
     else:
 
         st.info(
             (
                 "model_comparison_summary.csv를 "
-                "results/tables 폴더에 추가하면 "
-                "모델 비교 결과가 여기에 표시됩니다."
+                "results/tables 폴더에 추가하면 모델 비교 결과가 표시됩니다."
             )
         )
 
 
     # ========================================================
-    # Threshold
+    # 4. THRESHOLD
     # ========================================================
 
     st.markdown("---")
+
 
     with st.expander(
         "Threshold별 성능 비교 보기"
     ):
 
-
         threshold_fig = go.Figure()
 
 
         columns_to_plot = [
-
             (
                 "recall",
-                "Recall"
+                "Recall",
             ),
-
             (
                 "false_warning_rate",
-                "False warning"
+                "False warning",
             ),
-
             (
                 "first_alarm_warning_rate",
-                "First alarm warning"
-            )
+                "First alarm warning",
+            ),
         ]
 
 
-        for column_name, label in (
-            columns_to_plot
-        ):
+        for column_name, label in columns_to_plot:
 
-
-            if column_name not in (
-                threshold_df.columns
+            if (
+                column_name
+                not in threshold_df.columns
             ):
-
                 continue
 
 
             threshold_fig.add_trace(
                 go.Scatter(
-
                     x=threshold_df[
                         "threshold"
                     ],
-
                     y=threshold_df[
                         column_name
                     ],
-
-                    mode=
-                        "lines+markers",
-
-                    name=
-                        label
+                    mode="lines+markers",
+                    name=label,
                 )
             )
 
 
         threshold_fig.add_vline(
-
             x=0.50,
-
             line_dash="dash",
-
-            annotation_text=
-                "현재 기준 0.50"
+            annotation_text="현재 기준 0.50",
         )
 
 
         threshold_fig.update_layout(
-
-            xaxis_title=
-                "Warning threshold",
-
-            yaxis_title=
-                "Performance",
-
+            xaxis_title="Warning threshold",
+            yaxis_title="Performance",
             yaxis=dict(
                 range=[
                     0,
-                    1
+                    1,
                 ],
-                tickformat=".0%"
+                tickformat=".0%",
             ),
-
-            height=450
+            height=450,
         )
 
 
         st.plotly_chart(
-
             threshold_fig,
-
-            use_container_width=True
+            use_container_width=True,
         )
 
 
@@ -2266,5 +2313,5 @@ AI가 recipe를 자동 변경하지 않으며,
 
 </div>
 """,
-    unsafe_allow_html=True
+    unsafe_allow_html=True,
 )
