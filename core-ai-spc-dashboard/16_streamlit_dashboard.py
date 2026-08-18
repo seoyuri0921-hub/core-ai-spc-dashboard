@@ -22,7 +22,7 @@ st.set_page_config(
 # 1. PATH
 # ============================================================
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 TABLE_DIR = (
     BASE_DIR
