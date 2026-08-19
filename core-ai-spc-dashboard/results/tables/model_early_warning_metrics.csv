@@ -1,0 +1,6 @@
+model,feature_set,evaluation_set,n,accuracy,precision,recall,f1,roc_auc,tn,fp,fn,tp
+Logistic,History+Process,Pre_alarm_only,28,0.5357142857142857,0.2222222222222222,0.25,0.23529411764705882,0.49375,13,7,6,2
+Logistic,History-only,Pre_alarm_only,28,0.7142857142857143,0.5,0.375,0.42857142857142855,0.8125,17,3,5,3
+Naive,History-only,Pre_alarm_only,28,0.7142857142857143,0.0,0.0,0.0,0.5,20,0,8,0
+XGBoost,History+Process,Pre_alarm_only,28,0.6428571428571429,0.4,0.5,0.4444444444444444,0.625,14,6,4,4
+XGBoost,History-only,Pre_alarm_only,28,0.6428571428571429,0.4,0.5,0.4444444444444444,0.75625,14,6,4,4
