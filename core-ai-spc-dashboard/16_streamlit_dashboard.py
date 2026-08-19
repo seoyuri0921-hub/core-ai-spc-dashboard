@@ -15,8 +15,8 @@
 # Early-warning evaluation:
 # pre_alarm_eligible == 1
 #
-# Final threshold:
-# 0.50
+# Final operating threshold:
+# 0.60
 # ============================================================
 
 import streamlit as st
@@ -408,16 +408,6 @@ st.markdown(
     line-height: 1.5;
 }
 
-.model-note {
-    border: 1px solid #dbeafe;
-    background: #eff6ff;
-    padding: 0.9rem 1.1rem;
-    border-radius: 12px;
-    color: #1e3a8a;
-    font-size: 0.93rem;
-    line-height: 1.5;
-}
-
 </style>
 """,
     unsafe_allow_html=True,
@@ -473,8 +463,6 @@ if missing_files:
 
 # ============================================================
 # 4. DATA LOAD
-#
-# 파일 수정 시간이 바뀌면 cache 자동 갱신
 # ============================================================
 
 def file_signature(
@@ -1030,6 +1018,14 @@ st.sidebar.caption(
 
 st.sidebar.caption(
     tr(
+        "최종 운영 Threshold: 0.60",
+        "Final operating threshold: 0.60",
+    )
+)
+
+
+st.sidebar.caption(
+    tr(
         "AI는 공정 recipe를 자동 변경하지 않습니다.",
         "The AI does not automatically change the process recipe.",
     )
@@ -1204,9 +1200,12 @@ Lot {int(selected_lot)}
 
     # --------------------------------------------------------
     # Card styles
+    #
+    # current_spc_status 실제 값:
+    # NORMAL / ALARM
     # --------------------------------------------------------
 
-    if current_spc_status == "SPC ALARM":
+    if current_spc_status == "ALARM":
 
         card1_class = (
             "alarm-card"
@@ -1348,7 +1347,7 @@ Lot {int(selected_lot)}
 
     with card1:
 
-        if current_spc_status == "SPC ALARM":
+        if current_spc_status == "ALARM":
 
             current_description = tr(
                 "현재 wafer가 SPC 관리한계를 벗어났습니다. 공정 상태 확인이 필요합니다.",
@@ -1367,7 +1366,11 @@ Lot {int(selected_lot)}
         st.markdown(
             f"""
 <div class="{card1_class}">
-<div class="step-number">STEP 1</div>
+
+<div class="step-number">
+STEP 1
+</div>
+
 <div class="step-title">
 {tr("현재 공정 상태", "Current Process Status")}
 </div>
@@ -1650,7 +1653,7 @@ color:#ea580c;
         )
 
 
-    elif current_spc_status == "SPC ALARM":
+    elif current_spc_status == "ALARM":
 
         st.markdown(
             f"""
@@ -2107,10 +2110,6 @@ elif page == "timeline":
     fig = go.Figure()
 
 
-    # --------------------------------------------------------
-    # 모든 AI risk
-    # --------------------------------------------------------
-
     fig.add_trace(
         go.Scatter(
 
@@ -2152,20 +2151,20 @@ elif page == "timeline":
     )
 
 
+    # --------------------------------------------------------
+    # FINAL THRESHOLD = 0.60
+    # --------------------------------------------------------
+
     fig.add_hline(
-        y=0.50,
+        y=0.60,
         line_dash="dash",
         annotation_text=
             tr(
-                "사전경고 기준 50%",
-                "Early-warning threshold 50%",
+                "사전경고 기준 60%",
+                "Early-warning threshold 60%",
             ),
     )
 
-
-    # --------------------------------------------------------
-    # ★ 실제 early-warning 평가 대상에 한해서 marker 표시
-    # --------------------------------------------------------
 
     warning_rows = (
         lot_df[
@@ -2220,10 +2219,6 @@ elif page == "timeline":
             )
         )
 
-
-    # --------------------------------------------------------
-    # 최초 SPC 이상
-    # --------------------------------------------------------
 
     first_alarm_rows = (
         lot_df[
@@ -2302,10 +2297,6 @@ elif page == "timeline":
         use_container_width=True
     )
 
-
-    # --------------------------------------------------------
-    # First alarm interpretation
-    # --------------------------------------------------------
 
     if len(
         first_alarm_rows
@@ -2395,10 +2386,6 @@ elif page == "timeline":
             )
         )
 
-
-    # ========================================================
-    # Detailed lot data
-    # ========================================================
 
     with st.expander(
         tr(
@@ -2574,33 +2561,6 @@ elif page == "validation":
     )
 
 
-    st.markdown(
-        f"""
-<div class="model-note">
-
-<b>
-{tr(
-    "최종 평가 기준",
-    "Final evaluation setup"
-)}
-</b>
-
-<br><br>
-
-{tr(
-    "XGBoost + History/Conditioning + Top10 Process Features · LOLO 검증 · 최초 SPC 이상 발생 전(pre_alarm_eligible = 1) 28개 sample · Threshold = 0.50",
-    "XGBoost + History/Conditioning + Top10 Process Features · LOLO validation · 28 pre-first-SPC-alarm samples (pre_alarm_eligible = 1) · Threshold = 0.50"
-)}
-
-</div>
-""",
-        unsafe_allow_html=True,
-    )
-
-
-    st.write("")
-
-
     sample_count = int(
         get_metric(
             "pre_alarm_samples",
@@ -2750,10 +2710,24 @@ elif page == "validation":
     )
 
 
+    # --------------------------------------------------------
+    # Small explanation instead of blue box
+    # --------------------------------------------------------
+
     st.caption(
         tr(
-            "최초 이상 사전경고율 62.5%는 실제 최초 SPC 이상 8건 중 5건을 직전 wafer에서 경고한 event-level 지표입니다.",
-            "The 62.5% first-anomaly early-warning rate is an event-level metric: 5 of 8 first-SPC-anomaly events were warned one wafer ahead.",
+            (
+                "최종 성능은 LOLO 검증에서 최초 SPC 이상 발생 전 "
+                "28개 sample을 대상으로 Threshold 0.60에서 평가했습니다. "
+                "최초 이상 사전경고율 62.5%는 실제 최초 SPC 이상 8건 중 "
+                "5건을 직전 wafer에서 경고한 event-level 지표입니다."
+            ),
+            (
+                "Final performance was evaluated at Threshold 0.60 "
+                "on 28 pre-first-SPC-anomaly samples using LOLO validation. "
+                "The 62.5% first-anomaly early-warning rate is an event-level metric: "
+                "5 of 8 first-SPC-anomaly events were warned one wafer ahead."
+            ),
         )
     )
 
@@ -2946,8 +2920,8 @@ elif page == "validation":
 
         st.info(
             tr(
-                "여러 분류모델을 LOLO 방식으로 비교한 뒤, 본 연구의 핵심 목표인 최초 SPC 이상에 대한 사전경고 성능을 고려하여 XGBoost를 최종 모델로 사용했습니다.",
-                "Multiple classifiers were compared using LOLO validation, and XGBoost was selected as the final model considering the study's main objective: early warning before the first SPC anomaly.",
+                "여러 분류모델을 LOLO 방식으로 동일한 기본 threshold 0.50에서 비교한 뒤, 본 연구의 핵심 목표인 최초 SPC 이상 사전경고 성능을 고려하여 XGBoost를 최종 모델로 선정했습니다. 이후 XGBoost에 대해 threshold 분석을 수행하여 최종 운영 기준을 0.60으로 설정했습니다.",
+                "Multiple classifiers were compared using LOLO validation at the same default threshold of 0.50. XGBoost was selected considering the study's main objective of warning before the first SPC anomaly, and a subsequent threshold analysis set the final operating threshold to 0.60.",
             )
         )
 
@@ -3040,12 +3014,12 @@ elif page == "validation":
 
 
         threshold_fig.add_vline(
-            x=0.50,
+            x=0.60,
             line_dash="dash",
             annotation_text=
                 tr(
-                    "최종 기준 0.50",
-                    "Final threshold 0.50",
+                    "최종 기준 0.60",
+                    "Final threshold 0.60",
                 ),
         )
 
@@ -3231,8 +3205,18 @@ elif page == "validation":
 
         st.caption(
             tr(
-                "Threshold 0.50은 사전에 정한 기본 확률 분류 기준입니다. Threshold 분석은 사후 최적화를 위한 것이 아니라 Recall과 오경고율 간 trade-off를 확인하기 위해 제시합니다.",
-                "Threshold 0.50 is the predefined default probability cutoff. The threshold analysis is presented to show the trade-off between recall and false warnings rather than to perform post-hoc optimization.",
+                (
+                    "Threshold 0.60은 0.50과 동일한 Recall 62.5%와 "
+                    "최초 SPC 이상 사전경고율 5/8을 유지하면서 "
+                    "오경고율을 30.0%에서 25.0%로 낮춰 "
+                    "최종 운영 기준으로 선정했습니다."
+                ),
+                (
+                    "Threshold 0.60 was selected as the final operating threshold "
+                    "because it maintained the same 62.5% recall and 5/8 "
+                    "first-SPC-anomaly warning performance as 0.50 while reducing "
+                    "the false-warning rate from 30.0% to 25.0%."
+                ),
             )
         )
 
@@ -3274,8 +3258,8 @@ st.markdown(
 <br><br>
 
 {tr(
-    "최종 성능 평가는 최초 SPC 이상이 발생하기 전의 28개 sample(pre_alarm_eligible = 1)에 대해 LOLO 방식으로 수행했습니다.",
-    "Final performance was evaluated using LOLO validation on 28 samples before the first SPC anomaly (pre_alarm_eligible = 1)."
+    "최종 성능 평가는 최초 SPC 이상이 발생하기 전의 28개 sample(pre_alarm_eligible = 1)에 대해 LOLO 방식으로 수행했으며, 최종 운영 threshold는 0.60입니다.",
+    "Final performance was evaluated using LOLO validation on 28 samples before the first SPC anomaly (pre_alarm_eligible = 1), with a final operating threshold of 0.60."
 )}
 
 <br><br>
