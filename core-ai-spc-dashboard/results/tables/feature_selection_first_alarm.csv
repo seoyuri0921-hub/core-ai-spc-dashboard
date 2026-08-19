@@ -1,6 +1,0 @@
-feature_set,first_alarm_cases,correctly_warned,mean_risk_probability,warning_rate
-History+AllProcess,8,4,0.47945758141577244,0.5
-History+Top10,8,5,0.5390752572566271,0.625
-History+Top15,8,5,0.5373775940388441,0.625
-History+Top5,8,5,0.5104653518646955,0.625
-History-only,8,4,0.5674680843949318,0.5

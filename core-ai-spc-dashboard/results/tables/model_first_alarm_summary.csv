@@ -1,6 +1,0 @@
-model,feature_set,first_alarm_cases,correctly_warned,mean_risk_probability,warning_rate
-Logistic,History+Process,8,2,0.2773137105396297,0.25
-Logistic,History-only,8,3,0.46481111375572715,0.375
-Naive,History-only,8,0,0.0,0.0
-XGBoost,History+Process,8,4,0.47945758141577244,0.5
-XGBoost,History-only,8,4,0.5674680843949318,0.5
