@@ -1,11 +1,16 @@
 item,result
-Prediction task,Predict whether the next wafer will violate the Shewhart SPC limits
+Prediction task,Predict whether the next wafer will violate the SPC limits
 Prediction horizon,1 wafer ahead
 Validation,Leave-One-Lot-Out (LOLO)
+Final feature set,History + conditioning + Top 10 process features (selected inside each training fold)
+Evaluation subset,Pre-first-SPC-alarm samples only (pre_alarm_eligible = 1)
 Risk threshold,0.50
-Pre-alarm sample count,29
-Pre-alarm recall,66.7%
-Pre-alarm precision,50.0%
+Pre-alarm sample count,28
+ROC-AUC,0.731
+Pre-alarm recall,62.5%
+Pre-alarm precision,45.5%
+Specificity,70.0%
+F1 score,0.526
 False warning rate,30.0%
 First SPC alarm events,8
 First SPC alarms warned one wafer ahead,5/8 (62.5%)

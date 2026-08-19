@@ -1,0 +1,5 @@
+model,first_alarm_events,correctly_warned,warning_rate,mean_first_alarm_risk
+Logistic Regression,8,4,0.5,0.38678789842440175
+Random Forest,8,3,0.375,0.485887958881123
+SVM,8,4,0.5,0.5161957841346898
+XGBoost,8,5,0.625,0.5390752572566271
