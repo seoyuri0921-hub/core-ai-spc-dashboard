@@ -54,47 +54,15 @@ else:
     BASE_DIR = SCRIPT_DIR
 
 
-TABLE_DIR = (
-    BASE_DIR
-    / "results"
-    / "tables"
-)
+TABLE_DIR = BASE_DIR / "results" / "tables"
 
-
-SYSTEM_FILE = (
-    TABLE_DIR
-    / "final_ai_spc_system.csv"
-)
-
-METRICS_FILE = (
-    TABLE_DIR
-    / "final_evaluation_metrics.csv"
-)
-
-FIRST_ALARM_FILE = (
-    TABLE_DIR
-    / "final_first_alarm_performance.csv"
-)
-
-THRESHOLD_FILE = (
-    TABLE_DIR
-    / "final_threshold_analysis.csv"
-)
-
-PROCESS_IMPORTANCE_FILE = (
-    TABLE_DIR
-    / "shap_process_interpretation.csv"
-)
-
-BASELINE_VALIDATION_FILE = (
-    TABLE_DIR
-    / "baseline_sensitivity_summary.csv"
-)
-
-MODEL_COMPARISON_FILE = (
-    TABLE_DIR
-    / "model_comparison_summary.csv"
-)
+SYSTEM_FILE = TABLE_DIR / "final_ai_spc_system.csv"
+METRICS_FILE = TABLE_DIR / "final_evaluation_metrics.csv"
+FIRST_ALARM_FILE = TABLE_DIR / "final_first_alarm_performance.csv"
+THRESHOLD_FILE = TABLE_DIR / "final_threshold_analysis.csv"
+PROCESS_IMPORTANCE_FILE = TABLE_DIR / "shap_process_interpretation.csv"
+BASELINE_VALIDATION_FILE = TABLE_DIR / "baseline_sensitivity_summary.csv"
+MODEL_COMPARISON_FILE = TABLE_DIR / "model_comparison_summary.csv"
 
 
 # ============================================================
@@ -107,7 +75,7 @@ st.markdown(
 
 .block-container {
     padding-top: 1.5rem;
-    padding-bottom: 3rem;
+    padding-bottom: 2rem;
     max-width: 1450px;
 }
 
@@ -402,10 +370,60 @@ st.markdown(
     color: #1f2937;
 }
 
+.event-highlight {
+    border-left: 5px solid #f59e0b;
+    background: #fffaf0;
+    padding: 0.95rem 1.1rem;
+    border-radius: 10px;
+    margin-top: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.event-highlight-main {
+    font-size: 1.05rem;
+    font-weight: 850;
+    color: #92400e;
+}
+
+.event-highlight-sub {
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin-top: 0.3rem;
+}
+
+.model-reason-box {
+    border-left: 5px solid #2563eb;
+    background: #eff6ff;
+    padding: 1rem 1.1rem;
+    border-radius: 10px;
+    margin-top: 0.8rem;
+    margin-bottom: 0.7rem;
+    color: #1e3a8a;
+    line-height: 1.55;
+}
+
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
 .disclaimer {
     color: #6b7280;
     font-size: 0.84rem;
-    line-height: 1.5;
+    line-height: 1.55;
+    margin-top: 0.2rem;
+    padding-bottom: 0.3rem;
+}
+
+.disclaimer-title {
+    font-weight: 800;
+    color: #6b7280;
+    margin-bottom: 0.6rem;
+}
+
+.disclaimer p {
+    margin: 0 0 0.5rem 0;
+    padding: 0;
 }
 
 </style>
@@ -442,9 +460,7 @@ if missing_files:
 
     st.write(
         "Detected base directory:",
-        str(
-            BASE_DIR
-        )
+        str(BASE_DIR)
     )
 
     st.write(
@@ -453,9 +469,7 @@ if missing_files:
 
     for file in missing_files:
         st.code(
-            str(
-                file
-            )
+            str(file)
         )
 
     st.stop()
@@ -465,16 +479,12 @@ if missing_files:
 # 4. DATA LOAD
 # ============================================================
 
-def file_signature(
-    file_path
-):
+def file_signature(file_path):
 
     if not file_path.exists():
         return None
 
-    return (
-        file_path.stat().st_mtime_ns
-    )
+    return file_path.stat().st_mtime_ns
 
 
 @st.cache_data
@@ -541,12 +551,8 @@ def load_data(
 
         if column in system_df.columns:
 
-            system_df[
-                column
-            ] = (
-                system_df[
-                    column
-                ]
+            system_df[column] = (
+                system_df[column]
                 .astype(str)
                 .str.lower()
                 .map(
@@ -570,12 +576,8 @@ def load_data(
 
         if column in system_df.columns:
 
-            system_df[
-                column
-            ] = (
-                system_df[
-                    column
-                ]
+            system_df[column] = (
+                system_df[column]
                 .astype(int)
             )
 
@@ -671,26 +673,17 @@ def get_metric(
 
     row = (
         metrics_df[
-            metrics_df[
-                "metric"
-            ]
-            == metric_name
+            metrics_df["metric"] == metric_name
         ]
     )
 
 
-    if len(
-        row
-    ) == 0:
-
+    if len(row) == 0:
         return default
 
 
     return float(
-        row
-        .iloc[0][
-            "value"
-        ]
+        row.iloc[0]["value"]
     )
 
 
@@ -698,16 +691,12 @@ def clean_process_name(
     name
 ):
 
-    if pd.isna(
-        name
-    ):
+    if pd.isna(name):
         return "-"
 
 
     clean = (
-        str(
-            name
-        )
+        str(name)
         .replace(
             "current_",
             ""
@@ -749,9 +738,7 @@ def clean_process_name(
     }
 
 
-    for old, new in (
-        replacements.items()
-    ):
+    for old, new in replacements.items():
 
         clean = clean.replace(
             old,
@@ -854,9 +841,7 @@ def simple_status_badge(
         )
 
 
-    return str(
-        status
-    )
+    return str(status)
 
 
 def result_text(
@@ -899,9 +884,7 @@ def result_text(
 
     return messages.get(
         result,
-        str(
-            result
-        )
+        str(result)
     )
 
 
@@ -949,9 +932,7 @@ page = st.sidebar.radio(
     ],
 
     format_func=lambda x:
-        PAGE_LABELS[
-            x
-        ],
+        PAGE_LABELS[x],
 )
 
 
@@ -1197,13 +1178,6 @@ Lot {int(selected_lot)}
         ]
     )
 
-
-    # --------------------------------------------------------
-    # Card styles
-    #
-    # current_spc_status 실제 값:
-    # NORMAL / ALARM
-    # --------------------------------------------------------
 
     if current_spc_status == "ALARM":
 
@@ -1699,10 +1673,6 @@ color:#ea580c;
         )
 
 
-    # --------------------------------------------------------
-    # 평가 대상 여부 안내
-    # --------------------------------------------------------
-
     if not pre_alarm_eligible:
 
         st.markdown(
@@ -2150,10 +2120,6 @@ elif page == "timeline":
         )
     )
 
-
-    # --------------------------------------------------------
-    # FINAL THRESHOLD = 0.60
-    # --------------------------------------------------------
 
     fig.add_hline(
         y=0.60,
@@ -2605,7 +2571,7 @@ elif page == "validation":
 
 
     # --------------------------------------------------------
-    # First row
+    # Main KPI row
     # --------------------------------------------------------
 
     metric_row1 = (
@@ -2662,71 +2628,64 @@ elif page == "validation":
 
 
     # --------------------------------------------------------
-    # Second row
-    # --------------------------------------------------------
-
-    metric_row2 = (
-        st.columns(
-            4
-        )
-    )
-
-
-    metric_row2[
-        0
-    ].metric(
-        "F1 Score",
-        f"{f1:.3f}",
-    )
-
-
-    metric_row2[
-        1
-    ].metric(
-        "ROC-AUC",
-        f"{roc_auc:.3f}",
-    )
-
-
-    metric_row2[
-        2
-    ].metric(
-        tr(
-            "오경고율",
-            "False Warning Rate"
-        ),
-        f"{false_warning_rate:.1%}",
-    )
-
-
-    metric_row2[
-        3
-    ].metric(
-        tr(
-            "최초 이상 사전경고",
-            "First-Anomaly Early Warning"
-        ),
-        f"{first_warning_rate:.1%}",
-    )
-
-
-    # --------------------------------------------------------
-    # Small explanation instead of blue box
+    # Secondary metrics
     # --------------------------------------------------------
 
     st.caption(
         tr(
             (
+                f"보조 지표 · "
+                f"F1 Score {f1:.3f} · "
+                f"ROC-AUC {roc_auc:.3f} · "
+                f"오경고율 {false_warning_rate:.1%}"
+            ),
+            (
+                f"Secondary metrics · "
+                f"F1 Score {f1:.3f} · "
+                f"ROC-AUC {roc_auc:.3f} · "
+                f"False warning rate {false_warning_rate:.1%}"
+            ),
+        )
+    )
+
+
+    # --------------------------------------------------------
+    # Event-level key result
+    # --------------------------------------------------------
+
+    st.markdown(
+        f"""
+<div class="event-highlight">
+
+<div class="event-highlight-main">
+🎯 {tr(
+    f"최초 SPC 이상 8건 중 5건을 직전 wafer에서 사전경고 ({first_warning_rate:.1%})",
+    f"5 of 8 first-SPC-anomaly events were warned one wafer ahead ({first_warning_rate:.1%})"
+)}
+</div>
+
+<div class="event-highlight-sub">
+{tr(
+    "최초 SPC 이상 발생 직전 시점만을 평가한 event-level 지표입니다.",
+    "This is an event-level metric evaluated only at the point immediately before the first SPC anomaly."
+)}
+</div>
+
+</div>
+""",
+        unsafe_allow_html=True,
+    )
+
+
+    st.caption(
+        tr(
+            (
                 "최종 성능은 LOLO 검증에서 최초 SPC 이상 발생 전 "
-                "28개 sample을 대상으로 Threshold 0.60에서 평가했습니다. "
-                "최초 이상 사전경고율 62.5%는 실제 최초 SPC 이상 8건 중 "
-                "5건을 직전 wafer에서 경고한 event-level 지표입니다."
+                "28개 sample을 대상으로 Threshold 0.60에서 평가했습니다."
             ),
             (
                 "Final performance was evaluated at Threshold 0.60 "
-                "on 28 pre-first-SPC-anomaly samples using LOLO validation. "
-                "The 62.5% first-anomaly early-warning rate is an event-level metric: "
-                "5 of 8 first-SPC-anomaly events were warned one wafer ahead."
+                "on 28 samples occurring before the first SPC anomaly using LOLO validation."
             ),
         )
     )
@@ -2918,11 +2877,41 @@ elif page == "validation":
         )
 
 
-        st.info(
-            tr(
-                "여러 분류모델을 LOLO 방식으로 동일한 기본 threshold 0.50에서 비교한 뒤, 본 연구의 핵심 목표인 최초 SPC 이상 사전경고 성능을 고려하여 XGBoost를 최종 모델로 선정했습니다. 이후 XGBoost에 대해 threshold 분석을 수행하여 최종 운영 기준을 0.60으로 설정했습니다.",
-                "Multiple classifiers were compared using LOLO validation at the same default threshold of 0.50. XGBoost was selected considering the study's main objective of warning before the first SPC anomaly, and a subsequent threshold analysis set the final operating threshold to 0.60.",
-            )
+        st.markdown(
+            f"""
+<div class="model-reason-box">
+
+<b>
+{tr(
+    "XGBoost 선정 이유",
+    "Why XGBoost was selected"
+)}
+</b>
+
+<br><br>
+
+{tr(
+    (
+        "SVM은 ROC-AUC가 가장 높았지만(0.844), "
+        "본 연구의 핵심 목표인 최초 SPC 이상 직전 사전경고 성능은 "
+        "XGBoost가 더 높았습니다(XGBoost 62.5%, SVM 50.0%). "
+        "따라서 전체 분류 성능만이 아니라 실제 조기경보 목적에 적합한 성능을 우선하여 "
+        "XGBoost를 최종 모델로 선정했습니다. "
+        "이후 XGBoost에 대해 threshold 분석을 수행하여 최종 운영 기준을 0.60으로 설정했습니다."
+    ),
+    (
+        "SVM achieved the highest ROC-AUC (0.844), but XGBoost showed better performance "
+        "for the study's main objective: warning immediately before the first SPC anomaly "
+        "(XGBoost 62.5% vs. SVM 50.0%). "
+        "Therefore, XGBoost was selected not solely for overall classification performance, "
+        "but for its suitability for the practical early-warning objective. "
+        "A subsequent threshold analysis set the final operating threshold to 0.60."
+    )
+)}
+
+</div>
+""",
+            unsafe_allow_html=True,
         )
 
 
@@ -3056,10 +3045,6 @@ elif page == "validation":
         )
 
 
-        # ----------------------------------------------------
-        # Threshold table
-        # ----------------------------------------------------
-
         threshold_display_columns = [
             "threshold",
             "recall",
@@ -3096,12 +3081,8 @@ elif page == "validation":
 
             if col in threshold_show.columns:
 
-                threshold_show[
-                    col
-                ] = (
-                    threshold_show[
-                        col
-                    ]
+                threshold_show[col] = (
+                    threshold_show[col]
                     .map(
                         lambda x:
                             f"{x:.1%}"
@@ -3111,12 +3092,8 @@ elif page == "validation":
 
         if "f1" in threshold_show.columns:
 
-            threshold_show[
-                "f1"
-            ] = (
-                threshold_show[
-                    "f1"
-                ]
+            threshold_show["f1"] = (
+                threshold_show["f1"]
                 .map(
                     lambda x:
                         f"{x:.3f}"
@@ -3132,9 +3109,7 @@ elif page == "validation":
             in threshold_show.columns
         ):
 
-            threshold_show[
-                "First alarm"
-            ] = (
+            threshold_show["First alarm"] = (
                 threshold_show[
                     "first_alarm_warned"
                 ]
@@ -3234,40 +3209,40 @@ st.markdown(
     f"""
 <div class="disclaimer">
 
-<b>
+<div class="disclaimer-title">
 {tr(
     "연구용 Prototype",
     "Research Prototype"
 )}
-</b>
+</div>
 
-<br><br>
-
+<p>
 {tr(
     "본 시스템은 historical BOSCH plasma-etching 데이터를 wafer 순서대로 재생한 연구용 prototype입니다.",
     "This system is a research prototype that replays historical BOSCH plasma-etching data in wafer order."
 )}
+</p>
 
-<br><br>
-
+<p>
 {tr(
     "최종 AI 모델은 현재 wafer까지 확보 가능한 이력·conditioning 정보와 training fold 내부에서 선정한 Top10 공정 feature를 이용해 바로 다음 wafer 한 장의 SPC 이상 위험을 예측합니다.",
     "The final AI model uses history and conditioning information available through the current wafer together with Top10 process features selected inside each training fold to predict SPC anomaly risk for exactly one next wafer."
 )}
+</p>
 
-<br><br>
-
+<p>
 {tr(
     "최종 성능 평가는 최초 SPC 이상이 발생하기 전의 28개 sample(pre_alarm_eligible = 1)에 대해 LOLO 방식으로 수행했으며, 최종 운영 threshold는 0.60입니다.",
     "Final performance was evaluated using LOLO validation on 28 samples before the first SPC anomaly (pre_alarm_eligible = 1), with a final operating threshold of 0.60."
 )}
+</p>
 
-<br><br>
-
+<p>
 {tr(
     "AI가 recipe를 자동 변경하지 않으며, 최종 공정 확인 및 조정 여부는 엔지니어가 판단합니다.",
     "The AI does not automatically change the recipe; the engineer makes the final decision on process review and adjustment."
 )}
+</p>
 
 </div>
 """,
