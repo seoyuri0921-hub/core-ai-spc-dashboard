@@ -56,13 +56,41 @@ else:
 
 TABLE_DIR = BASE_DIR / "results" / "tables"
 
-SYSTEM_FILE = TABLE_DIR / "final_ai_spc_system.csv"
-METRICS_FILE = TABLE_DIR / "final_evaluation_metrics.csv"
-FIRST_ALARM_FILE = TABLE_DIR / "final_first_alarm_performance.csv"
-THRESHOLD_FILE = TABLE_DIR / "final_threshold_analysis.csv"
-PROCESS_IMPORTANCE_FILE = TABLE_DIR / "shap_process_interpretation.csv"
-BASELINE_VALIDATION_FILE = TABLE_DIR / "baseline_sensitivity_summary.csv"
-MODEL_COMPARISON_FILE = TABLE_DIR / "model_comparison_summary.csv"
+
+SYSTEM_FILE = (
+    TABLE_DIR
+    / "final_ai_spc_system.csv"
+)
+
+METRICS_FILE = (
+    TABLE_DIR
+    / "final_evaluation_metrics.csv"
+)
+
+FIRST_ALARM_FILE = (
+    TABLE_DIR
+    / "final_first_alarm_performance.csv"
+)
+
+THRESHOLD_FILE = (
+    TABLE_DIR
+    / "final_threshold_analysis.csv"
+)
+
+PROCESS_IMPORTANCE_FILE = (
+    TABLE_DIR
+    / "shap_process_interpretation.csv"
+)
+
+BASELINE_VALIDATION_FILE = (
+    TABLE_DIR
+    / "baseline_sensitivity_summary.csv"
+)
+
+MODEL_COMPARISON_FILE = (
+    TABLE_DIR
+    / "model_comparison_summary.csv"
+)
 
 
 # ============================================================
@@ -75,7 +103,7 @@ st.markdown(
 
 .block-container {
     padding-top: 1.5rem;
-    padding-bottom: 2rem;
+    padding-bottom: 3rem;
     max-width: 1450px;
 }
 
@@ -349,12 +377,17 @@ st.markdown(
     margin-bottom: 0.75rem;
 }
 
+
+/* ==========================================================
+   SHAP / PREDICTION IMPACT CARD
+   ========================================================== */
+
 .contributor-card {
     border: 1px solid #e5e7eb;
-    border-radius: 13px;
-    padding: 1rem;
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
     background: #f9fafb;
-    min-height: 145px;
+    min-height: 250px;
 }
 
 .contributor-rank {
@@ -365,65 +398,79 @@ st.markdown(
 
 .contributor-name {
     margin-top: 0.35rem;
-    margin-bottom: 0.55rem;
-    font-weight: 800;
-    color: #1f2937;
-}
-
-.event-highlight {
-    border-left: 5px solid #f59e0b;
-    background: #fffaf0;
-    padding: 0.95rem 1.1rem;
-    border-radius: 10px;
-    margin-top: 0.8rem;
-    margin-bottom: 0.5rem;
-}
-
-.event-highlight-main {
-    font-size: 1.05rem;
+    margin-bottom: 1.0rem;
     font-weight: 850;
-    color: #92400e;
+    color: #1f2937;
+    min-height: 2.8rem;
 }
 
-.event-highlight-sub {
-    font-size: 0.82rem;
+.signal-label {
+    font-size: 0.90rem;
+    color: #4b5563;
+    margin-bottom: 0.20rem;
+}
+
+.signal-value {
+    font-size: 1rem;
+    color: #111827;
+    font-weight: 800;
+}
+
+.signal-gap {
+    height: 0.90rem;
+}
+
+
+/* SHAP BAR */
+
+.impact-bar-bg {
+    width: 100%;
+    height: 12px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+    margin-top: 0.40rem;
+    margin-bottom: 0.45rem;
+}
+
+.impact-bar-positive {
+    height: 100%;
+    border-radius: 999px;
+    background: #ef4444;
+}
+
+.impact-bar-negative {
+    height: 100%;
+    border-radius: 999px;
+    background: #3b82f6;
+}
+
+.impact-direction-positive {
+    font-size: 0.80rem;
+    color: #b91c1c;
+    font-weight: 700;
+    margin-top: 0.20rem;
+}
+
+.impact-direction-negative {
+    font-size: 0.80rem;
+    color: #1d4ed8;
+    font-weight: 700;
+    margin-top: 0.20rem;
+}
+
+.impact-direction-neutral {
+    font-size: 0.80rem;
     color: #6b7280;
-    margin-top: 0.3rem;
+    font-weight: 700;
+    margin-top: 0.20rem;
 }
 
-.model-reason-box {
-    border-left: 5px solid #2563eb;
-    background: #eff6ff;
-    padding: 1rem 1.1rem;
-    border-radius: 10px;
-    margin-top: 0.8rem;
-    margin-bottom: 0.7rem;
-    color: #1e3a8a;
-    line-height: 1.55;
-}
-
-
-/* ============================================================
-   FOOTER
-   ============================================================ */
 
 .disclaimer {
     color: #6b7280;
     font-size: 0.84rem;
-    line-height: 1.55;
-    margin-top: 0.2rem;
-    padding-bottom: 0.3rem;
-}
-
-.disclaimer-title {
-    font-weight: 800;
-    color: #6b7280;
-    margin-bottom: 0.6rem;
-}
-
-.disclaimer p {
-    margin: 0 0 0.5rem 0;
-    padding: 0;
+    line-height: 1.5;
 }
 
 </style>
@@ -468,6 +515,7 @@ if missing_files:
     )
 
     for file in missing_files:
+
         st.code(
             str(file)
         )
@@ -479,12 +527,19 @@ if missing_files:
 # 4. DATA LOAD
 # ============================================================
 
-def file_signature(file_path):
+def file_signature(
+    file_path
+):
 
     if not file_path.exists():
+
         return None
 
-    return file_path.stat().st_mtime_ns
+    return (
+        file_path
+        .stat()
+        .st_mtime_ns
+    )
 
 
 @st.cache_data
@@ -551,8 +606,12 @@ def load_data(
 
         if column in system_df.columns:
 
-            system_df[column] = (
-                system_df[column]
+            system_df[
+                column
+            ] = (
+                system_df[
+                    column
+                ]
                 .astype(str)
                 .str.lower()
                 .map(
@@ -576,8 +635,12 @@ def load_data(
 
         if column in system_df.columns:
 
-            system_df[column] = (
-                system_df[column]
+            system_df[
+                column
+            ] = (
+                system_df[
+                    column
+                ]
                 .astype(int)
             )
 
@@ -673,17 +736,26 @@ def get_metric(
 
     row = (
         metrics_df[
-            metrics_df["metric"] == metric_name
+            metrics_df[
+                "metric"
+            ]
+            == metric_name
         ]
     )
 
 
-    if len(row) == 0:
+    if len(
+        row
+    ) == 0:
+
         return default
 
 
     return float(
-        row.iloc[0]["value"]
+        row
+        .iloc[0][
+            "value"
+        ]
     )
 
 
@@ -691,12 +763,17 @@ def clean_process_name(
     name
 ):
 
-    if pd.isna(name):
+    if pd.isna(
+        name
+    ):
+
         return "-"
 
 
     clean = (
-        str(name)
+        str(
+            name
+        )
         .replace(
             "current_",
             ""
@@ -738,7 +815,9 @@ def clean_process_name(
     }
 
 
-    for old, new in replacements.items():
+    for old, new in (
+        replacements.items()
+    ):
 
         clean = clean.replace(
             old,
@@ -841,7 +920,9 @@ def simple_status_badge(
         )
 
 
-    return str(status)
+    return str(
+        status
+    )
 
 
 def result_text(
@@ -884,7 +965,9 @@ def result_text(
 
     return messages.get(
         result,
-        str(result)
+        str(
+            result
+        )
     )
 
 
@@ -932,7 +1015,9 @@ page = st.sidebar.radio(
     ],
 
     format_func=lambda x:
-        PAGE_LABELS[x],
+        PAGE_LABELS[
+            x
+        ],
 )
 
 
@@ -1179,15 +1264,14 @@ Lot {int(selected_lot)}
     )
 
 
+    # ========================================================
+    # CARD STYLE
+    # ========================================================
+
     if current_spc_status == "ALARM":
 
-        card1_class = (
-            "alarm-card"
-        )
-
-        current_status_class = (
-            "big-status-alarm"
-        )
+        card1_class = "alarm-card"
+        current_status_class = "big-status-alarm"
 
         current_status_display = tr(
             "🚨 이상",
@@ -1197,13 +1281,8 @@ Lot {int(selected_lot)}
 
     else:
 
-        card1_class = (
-            "step-card"
-        )
-
-        current_status_class = (
-            "big-status"
-        )
+        card1_class = "step-card"
+        current_status_class = "big-status"
 
         current_status_display = (
             simple_status_badge(
@@ -1214,92 +1293,44 @@ Lot {int(selected_lot)}
 
     if system_status == "EARLY WARNING":
 
-        card2_class = (
-            "warning-card"
-        )
-
-        risk_class = (
-            "big-risk-warning"
-        )
-
-        step2_description_class = (
-            "warning-description"
-        )
+        card2_class = "warning-card"
+        risk_class = "big-risk-warning"
+        step2_description_class = "warning-description"
 
 
     elif system_status == "SPC ALARM":
 
-        card2_class = (
-            "alarm-card"
-        )
-
-        risk_class = (
-            "big-risk-alarm"
-        )
-
-        step2_description_class = (
-            "alarm-description"
-        )
+        card2_class = "alarm-card"
+        risk_class = "big-risk-alarm"
+        step2_description_class = "alarm-description"
 
 
     else:
 
-        card2_class = (
-            "step-card"
-        )
-
-        risk_class = (
-            "big-risk"
-        )
-
-        step2_description_class = (
-            "small-description"
-        )
+        card2_class = "step-card"
+        risk_class = "big-risk"
+        step2_description_class = "small-description"
 
 
     if system_status == "EARLY WARNING":
 
-        card3_class = (
-            "warning-card"
-        )
-
-        engineer_class = (
-            "engineer-warning"
-        )
-
-        description_class = (
-            "warning-description"
-        )
+        card3_class = "warning-card"
+        engineer_class = "engineer-warning"
+        description_class = "warning-description"
 
 
     elif system_status == "SPC ALARM":
 
-        card3_class = (
-            "alarm-card"
-        )
-
-        engineer_class = (
-            "engineer-alarm"
-        )
-
-        description_class = (
-            "alarm-description"
-        )
+        card3_class = "alarm-card"
+        engineer_class = "engineer-alarm"
+        description_class = "alarm-description"
 
 
     else:
 
-        card3_class = (
-            "step-card"
-        )
-
-        engineer_class = (
-            "engineer-normal"
-        )
-
-        description_class = (
-            "small-description"
-        )
+        card3_class = "step-card"
+        engineer_class = "engineer-normal"
+        description_class = "small-description"
 
 
     card1, arrow1, card2, arrow2, card3 = (
@@ -1758,9 +1789,60 @@ color:#ea580c;
         st.markdown(
             tr(
                 "### AI 판단에 기여한 주요 공정 신호",
-                "### Key Process Signals Contributing to the AI Decision",
+                "### Key Process Signals Influencing the AI Prediction",
             )
         )
+
+
+        # ====================================================
+        # Top3 SHAP absolute max
+        #
+        # 막대 길이를 상대 비교하기 위한 기준
+        # ====================================================
+
+        shap_values = []
+
+
+        for rank in range(
+            1,
+            4
+        ):
+
+            value = selected_row.get(
+                f"top{rank}_shap",
+                np.nan
+            )
+
+
+            if not pd.isna(
+                value
+            ):
+
+                shap_values.append(
+                    abs(
+                        float(
+                            value
+                        )
+                    )
+                )
+
+
+        if len(
+            shap_values
+        ) > 0:
+
+            max_shap_abs = max(
+                shap_values
+            )
+
+        else:
+
+            max_shap_abs = 1.0
+
+
+        if max_shap_abs <= 0:
+
+            max_shap_abs = 1.0
 
 
         contributor_cols = (
@@ -1800,8 +1882,14 @@ color:#ea580c;
                 rank - 1
             ]:
 
-                if pd.isna(
-                    process_name
+                if (
+                    pd.isna(
+                        process_name
+                    )
+                    or
+                    pd.isna(
+                        process_shap_value
+                    )
                 ):
 
                     st.info(
@@ -1813,6 +1901,87 @@ color:#ea580c;
 
 
                 else:
+
+                    shap_value_float = float(
+                        process_shap_value
+                    )
+
+
+                    # ----------------------------------------
+                    # 상대적 막대 길이
+                    # ----------------------------------------
+
+                    impact_percent = (
+                        abs(
+                            shap_value_float
+                        )
+                        /
+                        max_shap_abs
+                        *
+                        100
+                    )
+
+
+                    impact_percent = min(
+                        max(
+                            impact_percent,
+                            0
+                        ),
+                        100
+                    )
+
+
+                    # ----------------------------------------
+                    # 방향
+                    # ----------------------------------------
+
+                    if shap_value_float > 0:
+
+                        bar_class = (
+                            "impact-bar-positive"
+                        )
+
+                        direction_class = (
+                            "impact-direction-positive"
+                        )
+
+                        direction_text = tr(
+                            "▲ 이상 위험 증가 방향",
+                            "▲ Toward higher anomaly risk"
+                        )
+
+
+                    elif shap_value_float < 0:
+
+                        bar_class = (
+                            "impact-bar-negative"
+                        )
+
+                        direction_class = (
+                            "impact-direction-negative"
+                        )
+
+                        direction_text = tr(
+                            "▼ 이상 위험 감소 방향",
+                            "▼ Toward lower anomaly risk"
+                        )
+
+
+                    else:
+
+                        bar_class = (
+                            "impact-bar-negative"
+                        )
+
+                        direction_class = (
+                            "impact-direction-neutral"
+                        )
+
+                        direction_text = tr(
+                            "예측 영향 없음",
+                            "No directional impact"
+                        )
+
 
                     st.markdown(
                         f"""
@@ -1830,25 +1999,49 @@ color:#ea580c;
 {clean_process_name(process_name)}
 </div>
 
-{tr(
-    "센서 요약값",
-    "Sensor summary value"
-)}:
 
-<b>
+<div class="signal-label">
+{tr(
+    "센서 요약값:",
+    "Sensor summary value:"
+)}
+</div>
+
+<div class="signal-value">
 {process_value:.4f}
-</b>
+</div>
 
-<br>
 
+<div class="signal-gap"></div>
+
+
+<div class="signal-label">
 {tr(
-    "AI 기여도",
-    "AI contribution"
-)}:
+    "예측 영향도:",
+    "Prediction impact:"
+)}
+</div>
 
-<b>
-{process_shap_value:+.3f}
-</b>
+<div class="signal-value">
+{shap_value_float:+.3f}
+</div>
+
+
+<div class="impact-bar-bg">
+
+<div
+class="{bar_class}"
+style="
+width:{impact_percent:.1f}%;
+">
+</div>
+
+</div>
+
+
+<div class="{direction_class}">
+{direction_text}
+</div>
 
 </div>
 """,
@@ -1858,8 +2051,20 @@ color:#ea580c;
 
         st.caption(
             tr(
-                "SHAP은 AI가 어떤 공정 신호를 중요하게 사용했는지 설명합니다. 해당 변수가 실제 이상 원인이라는 뜻은 아닙니다.",
-                "SHAP explains which process signals the AI relied on most. It does not prove that the variable is the physical cause of the anomaly.",
+                (
+                    "막대 길이는 현재 wafer 예측에서 Top-3 공정 신호의 "
+                    "SHAP 절댓값을 서로 비교한 상대적 예측 영향도입니다. "
+                    "양수(+)는 SPC 이상 위험을 높이는 방향, 음수(-)는 "
+                    "위험을 낮추는 방향의 영향을 의미합니다. "
+                    "SHAP은 해당 변수가 실제 이상 원인임을 의미하지 않습니다."
+                ),
+                (
+                    "Bar length represents the relative prediction impact "
+                    "based on the absolute SHAP values of the Top-3 process signals "
+                    "for the current prediction. Positive (+) values push the "
+                    "prediction toward higher SPC anomaly risk, while negative (-) "
+                    "values push it toward lower risk. SHAP does not prove physical causality."
+                ),
             )
         )
 
@@ -2515,10 +2720,6 @@ elif page == "validation":
     )
 
 
-    # ========================================================
-    # 1. FINAL PERFORMANCE
-    # ========================================================
-
     st.markdown(
         tr(
             "### 1. 최종 AI Early-Warning 성능",
@@ -2569,10 +2770,6 @@ elif page == "validation":
         "first_spc_alarm_warning_rate"
     )
 
-
-    # --------------------------------------------------------
-    # Main KPI row
-    # --------------------------------------------------------
 
     metric_row1 = (
         st.columns(
@@ -2627,53 +2824,48 @@ elif page == "validation":
     )
 
 
-    # --------------------------------------------------------
-    # Secondary metrics
-    # --------------------------------------------------------
-
-    st.caption(
-        tr(
-            (
-                f"보조 지표 · "
-                f"F1 Score {f1:.3f} · "
-                f"ROC-AUC {roc_auc:.3f} · "
-                f"오경고율 {false_warning_rate:.1%}"
-            ),
-            (
-                f"Secondary metrics · "
-                f"F1 Score {f1:.3f} · "
-                f"ROC-AUC {roc_auc:.3f} · "
-                f"False warning rate {false_warning_rate:.1%}"
-            ),
+    metric_row2 = (
+        st.columns(
+            4
         )
     )
 
 
-    # --------------------------------------------------------
-    # Event-level key result
-    # --------------------------------------------------------
+    metric_row2[
+        0
+    ].metric(
+        "F1 Score",
+        f"{f1:.3f}",
+    )
 
-    st.markdown(
-        f"""
-<div class="event-highlight">
 
-<div class="event-highlight-main">
-🎯 {tr(
-    f"최초 SPC 이상 8건 중 5건을 직전 wafer에서 사전경고 ({first_warning_rate:.1%})",
-    f"5 of 8 first-SPC-anomaly events were warned one wafer ahead ({first_warning_rate:.1%})"
-)}
-</div>
+    metric_row2[
+        1
+    ].metric(
+        "ROC-AUC",
+        f"{roc_auc:.3f}",
+    )
 
-<div class="event-highlight-sub">
-{tr(
-    "최초 SPC 이상 발생 직전 시점만을 평가한 event-level 지표입니다.",
-    "This is an event-level metric evaluated only at the point immediately before the first SPC anomaly."
-)}
-</div>
 
-</div>
-""",
-        unsafe_allow_html=True,
+    metric_row2[
+        2
+    ].metric(
+        tr(
+            "오경고율",
+            "False Warning Rate"
+        ),
+        f"{false_warning_rate:.1%}",
+    )
+
+
+    metric_row2[
+        3
+    ].metric(
+        tr(
+            "최초 이상 사전경고",
+            "First-Anomaly Early Warning"
+        ),
+        f"{first_warning_rate:.1%}",
     )
 
 
@@ -2681,11 +2873,15 @@ elif page == "validation":
         tr(
             (
                 "최종 성능은 LOLO 검증에서 최초 SPC 이상 발생 전 "
-                "28개 sample을 대상으로 Threshold 0.60에서 평가했습니다."
+                "28개 sample을 대상으로 Threshold 0.60에서 평가했습니다. "
+                "최초 이상 사전경고율 62.5%는 실제 최초 SPC 이상 8건 중 "
+                "5건을 직전 wafer에서 경고한 event-level 지표입니다."
             ),
             (
                 "Final performance was evaluated at Threshold 0.60 "
-                "on 28 samples occurring before the first SPC anomaly using LOLO validation."
+                "on 28 pre-first-SPC-anomaly samples using LOLO validation. "
+                "The 62.5% first-anomaly early-warning rate is an event-level metric: "
+                "5 of 8 first-SPC-anomaly events were warned one wafer ahead."
             ),
         )
     )
@@ -2729,14 +2925,12 @@ elif page == "validation":
             baseline_show
             .rename(
                 columns={
+
                     "baseline_definition":
                         "Baseline",
 
                     "pooled_sigma":
-                        tr(
-                            "Pooled σ",
-                            "Pooled σ"
-                        ),
+                        "Pooled σ",
 
                     "three_sigma_half_width":
                         tr(
@@ -2877,41 +3071,23 @@ elif page == "validation":
         )
 
 
-        st.markdown(
-            f"""
-<div class="model-reason-box">
-
-<b>
-{tr(
-    "XGBoost 선정 이유",
-    "Why XGBoost was selected"
-)}
-</b>
-
-<br><br>
-
-{tr(
-    (
-        "SVM은 ROC-AUC가 가장 높았지만(0.844), "
-        "본 연구의 핵심 목표인 최초 SPC 이상 직전 사전경고 성능은 "
-        "XGBoost가 더 높았습니다(XGBoost 62.5%, SVM 50.0%). "
-        "따라서 전체 분류 성능만이 아니라 실제 조기경보 목적에 적합한 성능을 우선하여 "
-        "XGBoost를 최종 모델로 선정했습니다. "
-        "이후 XGBoost에 대해 threshold 분석을 수행하여 최종 운영 기준을 0.60으로 설정했습니다."
-    ),
-    (
-        "SVM achieved the highest ROC-AUC (0.844), but XGBoost showed better performance "
-        "for the study's main objective: warning immediately before the first SPC anomaly "
-        "(XGBoost 62.5% vs. SVM 50.0%). "
-        "Therefore, XGBoost was selected not solely for overall classification performance, "
-        "but for its suitability for the practical early-warning objective. "
-        "A subsequent threshold analysis set the final operating threshold to 0.60."
-    )
-)}
-
-</div>
-""",
-            unsafe_allow_html=True,
+        st.info(
+            tr(
+                (
+                    "여러 분류모델을 LOLO 방식으로 동일한 기본 threshold "
+                    "0.50에서 비교한 뒤, 본 연구의 핵심 목표인 최초 SPC 이상 "
+                    "사전경고 성능을 고려하여 XGBoost를 최종 모델로 선정했습니다. "
+                    "이후 XGBoost에 대해 threshold 분석을 수행하여 최종 운영 기준을 "
+                    "0.60으로 설정했습니다."
+                ),
+                (
+                    "Multiple classifiers were compared using LOLO validation "
+                    "at the same default threshold of 0.50. XGBoost was selected "
+                    "considering the study's main objective of warning before the "
+                    "first SPC anomaly, and a subsequent threshold analysis set "
+                    "the final operating threshold to 0.60."
+                ),
+            )
         )
 
 
@@ -2977,6 +3153,7 @@ elif page == "validation":
         ) in columns_to_plot:
 
             if column_name not in threshold_df.columns:
+
                 continue
 
 
@@ -3081,8 +3258,12 @@ elif page == "validation":
 
             if col in threshold_show.columns:
 
-                threshold_show[col] = (
-                    threshold_show[col]
+                threshold_show[
+                    col
+                ] = (
+                    threshold_show[
+                        col
+                    ]
                     .map(
                         lambda x:
                             f"{x:.1%}"
@@ -3092,8 +3273,12 @@ elif page == "validation":
 
         if "f1" in threshold_show.columns:
 
-            threshold_show["f1"] = (
-                threshold_show["f1"]
+            threshold_show[
+                "f1"
+            ] = (
+                threshold_show[
+                    "f1"
+                ]
                 .map(
                     lambda x:
                         f"{x:.3f}"
@@ -3104,20 +3289,28 @@ elif page == "validation":
         if (
             "first_alarm_warned"
             in threshold_show.columns
+
             and
+
             "first_alarm_total"
             in threshold_show.columns
         ):
 
-            threshold_show["First alarm"] = (
+            threshold_show[
+                "First alarm"
+            ] = (
                 threshold_show[
                     "first_alarm_warned"
                 ]
                 .astype(int)
                 .astype(str)
+
                 +
+
                 "/"
+
                 +
+
                 threshold_show[
                     "first_alarm_total"
                 ]
@@ -3209,40 +3402,40 @@ st.markdown(
     f"""
 <div class="disclaimer">
 
-<div class="disclaimer-title">
+<b>
 {tr(
     "연구용 Prototype",
     "Research Prototype"
 )}
-</div>
+</b>
 
-<p>
+<br><br>
+
 {tr(
     "본 시스템은 historical BOSCH plasma-etching 데이터를 wafer 순서대로 재생한 연구용 prototype입니다.",
     "This system is a research prototype that replays historical BOSCH plasma-etching data in wafer order."
 )}
-</p>
 
-<p>
+<br><br>
+
 {tr(
     "최종 AI 모델은 현재 wafer까지 확보 가능한 이력·conditioning 정보와 training fold 내부에서 선정한 Top10 공정 feature를 이용해 바로 다음 wafer 한 장의 SPC 이상 위험을 예측합니다.",
     "The final AI model uses history and conditioning information available through the current wafer together with Top10 process features selected inside each training fold to predict SPC anomaly risk for exactly one next wafer."
 )}
-</p>
 
-<p>
+<br><br>
+
 {tr(
     "최종 성능 평가는 최초 SPC 이상이 발생하기 전의 28개 sample(pre_alarm_eligible = 1)에 대해 LOLO 방식으로 수행했으며, 최종 운영 threshold는 0.60입니다.",
     "Final performance was evaluated using LOLO validation on 28 samples before the first SPC anomaly (pre_alarm_eligible = 1), with a final operating threshold of 0.60."
 )}
-</p>
 
-<p>
+<br><br>
+
 {tr(
     "AI가 recipe를 자동 변경하지 않으며, 최종 공정 확인 및 조정 여부는 엔지니어가 판단합니다.",
     "The AI does not automatically change the recipe; the engineer makes the final decision on process review and adjustment."
 )}
-</p>
 
 </div>
 """,
