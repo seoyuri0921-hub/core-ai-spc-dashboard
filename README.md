@@ -20,10 +20,14 @@ AI-SPC early warning dashboard for semiconductor etching process monitoring
 ## Dashboard Preview
 
 <p align="center">
-  <b>Lot 3 | Current W6 → Next W7</b><br><br>
-  Current SPC: NORMAL → AI Risk: 73% → EARLY WARNING → Actual W7 SPC Alarm
+  <img src="assets/dashboard_demo.gif"
+       alt="AI-SPC Dashboard Demo"
+       width="1000">
 </p>
 
+<p align="center">
+  <b>Lot 3 · W6 → W7 Early Warning Demonstration</b>
+</p>
 ---
 
 ## 1. Key Results
