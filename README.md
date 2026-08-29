@@ -1,6 +1,3 @@
-# core-ai-spc-dashboard
-AI-SPC early warning dashboard for semiconductor etching process monitoring
-
 # AI-SPC Early Warning for Semiconductor Etch Process Drift
 
 > **SPC의 사후 이상 감지를 AI 기반 Next-Wafer 예측으로 보완한 반도체 식각 공정 조기경고 시스템**
@@ -28,6 +25,7 @@ AI-SPC early warning dashboard for semiconductor etching process monitoring
 <p align="center">
   <b>Lot 3 · W6 → W7 Early Warning Demonstration</b>
 </p>
+
 ---
 
 ## 1. Key Results
