@@ -3,9 +3,11 @@ AI-SPC early warning dashboard for semiconductor etching process monitoring
 
 # AI-SPC Early Warning for Semiconductor Etch Process Drift
 
+> **SPC의 사후 이상 감지를 AI 기반 Next-Wafer 예측으로 보완한 반도체 식각 공정 조기경고 시스템**
+
 <p align="center">
   <a href="https://core-ai-spc-dashboard-kyfg6yxrrfjntwabxcfqqf.streamlit.app/">
-    <img src="https://img.shields.io/badge/▶%20Live%20Dashboard-Open-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white">
+    <img src="https://img.shields.io/badge/▶%20LIVE%20DASHBOARD-OPEN-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white">
   </a>
 </p>
 
@@ -17,35 +19,10 @@ AI-SPC early warning dashboard for semiconductor etching process monitoring
 
 ## Dashboard Preview
 
-## Dashboard Preview
-
 <p align="center">
-  <img src="assets/dashboard_demo.gif" width="900">
-</p>
-
-<p align="center">
-  <b>Lot 3 | Current W6 → Next W7</b><br>
+  <b>Lot 3 | Current W6 → Next W7</b><br><br>
   Current SPC: NORMAL → AI Risk: 73% → EARLY WARNING → Actual W7 SPC Alarm
 </p>
----
-
-## Key Results
-
-| Metric | Result |
-|---|---:|
-| Process Drift | **-0.1188 µm / wafer** |
-| Validation | **Leave-One-Lot-Out** |
-| First SPC Alarm Early Warning | **5 / 8 (62.5%)** |
-| ROC-AUC | **0.731** |
-| Final Threshold | **0.60** |
-| False Alarm Rate | **25%** |
-> **SPC의 사후 이상 감지를 AI 기반 Next-Wafer 예측으로 보완한 반도체 식각 공정 조기경고 시스템**
-
-본 프로젝트는 Bosch Plasma Etching 공정에서 반복적인 Wafer 처리에 따라 발생하는 **Etch Depth Drift**를 분석하고,  
-기존 SPC(Statistical Process Control)가 이상을 확인하기 전에 **다음 Wafer의 SPC 이상 위험을 사전 예측**하는 AI-SPC 시스템을 구축한 프로젝트입니다.
-
-현재 Wafer까지 확보된 식각 결과와 공정 센서 데이터를 기반으로 다음 Wafer의 SPC 관리한계 이탈 위험을 예측하며,  
-SHAP을 통해 AI 경고에 영향을 준 주요 공정 신호를 함께 제공하여 **엔지니어의 선제적 공정 점검을 지원**하도록 설계했습니다.
 
 ---
 
@@ -116,50 +93,49 @@ AI는 다음 Wafer인 **W7의 SPC 이상 위험을 약 73%**로 예측했습니�
 | Wafer Order | W1, W2, W3 ... | Drift progression indicator |
 | OES | 3648-channel Optical Emission Spectrum | Plasma State Analysis |
 
-공정 센서 데이터는 5 Hz 시계열 데이터로 제공되며, Wafer 단위 분석을 위해 평균, 표준편차, 최솟값, 최댓값 등의 통계량으로 변환했습니다.
+공정 센서 데이터는 5 Hz 시계열 데이터로 제공되며,  
+Wafer 단위 분석을 위해 평균, 표준편차, 최솟값, 최댓값 등의 통계량으로 변환했습니다.
 
 ---
 
 ## 4. System Architecture
 
-```text
-Raw Etch / Process Data
-          │
-          ▼
-Data Preprocessing
-          │
-          ▼
-Wafer-level Feature Engineering
-          │
-          ├───────────────┐
-          │               │
-          ▼               ▼
-   Drift Validation     SPC Baseline
-                       W1-W3 / ±3σ
-          │               │
-          └───────┬───────┘
-                  ▼
-            Current Wafer Wn
-                  │
-                  ▼
-             XGBoost
-                  │
-                  ▼
-       Next Wafer Wn+1 Risk
-                  │
-                  ▼
-         Threshold = 0.60
-                  │
-          ┌───────┴────────┐
-          ▼                ▼
-       NORMAL        EARLY WARNING
-                           │
-                           ▼
-                    SHAP Explanation
-                           │
-                           ▼
-                    Engineer Review
-```
+    Raw Etch / Process Data
+              │
+              ▼
+    Data Preprocessing
+              │
+              ▼
+    Wafer-level Feature Engineering
+              │
+              ├───────────────┐
+              │               │
+              ▼               ▼
+       Drift Validation     SPC Baseline
+                           W1-W3 / ±3σ
+              │               │
+              └───────┬───────┘
+                      ▼
+                Current Wafer Wn
+                      │
+                      ▼
+                 XGBoost
+                      │
+                      ▼
+           Next Wafer Wn+1 Risk
+                      │
+                      ▼
+             Threshold = 0.60
+                      │
+              ┌───────┴────────┐
+              ▼                ▼
+           NORMAL        EARLY WARNING
+                               │
+                               ▼
+                        SHAP Explanation
+                               │
+                               ▼
+                        Engineer Review
 
 ### SPC와 AI의 역할
 
@@ -181,24 +157,22 @@ Wafer-level Feature Engineering
 89-point Etch Depth 데이터로 각 Wafer의 평균 Si Etch Depth를 계산한 뒤,  
 Wafer 처리 순서에 따른 변화를 분석했습니다.
 
-Lot마다 초기 Etch Depth가 다르기 때문에 단순한 전체 회귀가 아니라 Lot 차이를 통제한 ANCOVA를 수행했습니다.
+Lot마다 초기 Etch Depth가 다르기 때문에 단순한 전체 회귀가 아니라  
+Lot 차이를 통제한 ANCOVA를 수행했습니다.
 
 ### Result
 
-```text
-Etch Depth Change = -0.1188 µm / wafer
-p-value < 0.001
-R² = 0.792
-```
+    Etch Depth Change = -0.1188 µm / wafer
+    p-value < 0.001
+    R² = 0.792
 
-즉, Lot별 초기 수준 차이를 고려한 이후에도 Wafer가 한 장씩 처리될수록 평균 Si Etch Depth가 약 **0.119 µm 감소**하는 경향을 확인했습니다.
+즉, Lot별 초기 수준 차이를 고려한 이후에도 Wafer가 한 장씩 처리될수록  
+평균 Si Etch Depth가 약 **0.119 µm 감소**하는 경향을 확인했습니다.
 
 ### Related Results
 
-```text
-results/tables/drift_ancova.csv
-results/tables/drift_lot_regression.csv
-```
+    results/tables/drift_ancova.csv
+    results/tables/drift_lot_regression.csv
 
 ---
 
@@ -218,25 +192,22 @@ SPC 관리 기준을 임의로 설정하지 않고 초기 Wafer 범위에 따른
 
 **W1-W3를 최종 SPC Baseline으로 선정했습니다.**
 
-이유는 다음과 같습니다.
-
 - W1-W2는 Sample 수가 적어 개별 Wafer 변동에 민감
 - W1-W3에서 Pooled σ가 가장 작음
 - Lot 간 초기 변동성 역시 가장 안정적
 - W1-W4에서는 이미 진행된 Drift 일부가 Baseline에 포함될 가능성 존재
 
-따라서 각 Lot의 W1-W3 평균을 중심선으로 사용하고, **±3σ Control Limit**을 설정했습니다.
+따라서 각 Lot의 W1-W3 평균을 중심선으로 사용하고,  
+**±3σ Control Limit**을 설정했습니다.
 
 ### Related Results
 
-```text
-results/tables/spc_baseline_comparison.csv
-results/tables/spc_baseline_summary.csv
-results/tables/baseline_sensitivity_summary.csv
-results/tables/baseline_sensitivity_center_shift.csv
-results/tables/shewhart_spc_detail.csv
-results/tables/shewhart_first_alarm.csv
-```
+    results/tables/spc_baseline_comparison.csv
+    results/tables/spc_baseline_summary.csv
+    results/tables/baseline_sensitivity_summary.csv
+    results/tables/baseline_sensitivity_center_shift.csv
+    results/tables/shewhart_spc_detail.csv
+    results/tables/shewhart_first_alarm.csv
 
 ---
 
@@ -260,29 +231,25 @@ AI 모델은 현재 Wafer `Wn`까지 확보된 정보만을 사용하여
 
 5 Hz Process Time-Series는 Wafer 단위로 다음 통계량을 생성했습니다.
 
-```text
-mean
-standard deviation
-minimum
-maximum
-```
+    mean
+    standard deviation
+    minimum
+    maximum
 
 ### Important Rule
 
 다음 Wafer의 결과는 입력에 포함하지 않았습니다.
 
-```text
-Available at Prediction Time ✅
+    Available at Prediction Time
 
-Current Wafer Information
-Previous Process History
-Current Process Sensor Summary
+    Current Wafer Information
+    Previous Process History
+    Current Process Sensor Summary
 
-Not Available at Prediction Time ❌
+    Not Available at Prediction Time
 
-Next Wafer Etch Result
-Next Wafer Process Sensor Data
-```
+    Next Wafer Etch Result
+    Next Wafer Process Sensor Data
 
 이를 통해 실제 공정에서 사용 가능한 정보 시점을 유지했습니다.
 
@@ -295,33 +262,30 @@ Wafer 단위 Random Split은 사용하지 않았습니다.
 동일 Lot의 Wafer들은 서로 유사한 Chamber State와 Process History를 공유하므로,  
 동일 Lot 데이터가 Train/Test에 함께 포함될 경우 성능이 실제보다 높게 평가될 수 있습니다.
 
-따라서 다음과 같은 **Leave-One-Lot-Out Cross Validation**을 적용했습니다.
+따라서 **Leave-One-Lot-Out Cross Validation**을 적용했습니다.
 
-```text
-Fold 1
-Train : Lot 2 ~ Lot 10
-Test  : Lot 1
+    Fold 1
+    Train : Lot 2 ~ Lot 10
+    Test  : Lot 1
 
-Fold 2
-Train : Lot 1, Lot 3 ~ Lot 10
-Test  : Lot 2
+    Fold 2
+    Train : Lot 1, Lot 3 ~ Lot 10
+    Test  : Lot 2
 
-...
+    ...
 
-Repeat for every Lot
-```
+    Repeat for every Lot
 
-Feature Selection 역시 각 Training Fold 내부에서 독립적으로 수행하여 Test Lot 정보가 Feature Selection에 사용되지 않도록 했습니다.
+Feature Selection 역시 각 Training Fold 내부에서 독립적으로 수행하여  
+Test Lot 정보가 Feature Selection에 사용되지 않도록 했습니다.
 
 ### Related Results
 
-```text
-results/tables/model_lolo_fold_metrics.csv
-results/tables/model_lolo_overall_metrics.csv
-results/tables/model_oof_predictions.csv
-results/tables/feature_selection_fold_rankings.csv
-results/tables/feature_selection_stability.csv
-```
+    results/tables/model_lolo_fold_metrics.csv
+    results/tables/model_lolo_overall_metrics.csv
+    results/tables/model_oof_predictions.csv
+    results/tables/feature_selection_fold_rankings.csv
+    results/tables/feature_selection_stability.csv
 
 ---
 
@@ -346,18 +310,17 @@ XGBoost는 실제 최초 SPC 이상 8건 중 5건을 직전 Wafer에서 사전�
 
 ### Related Results
 
-```text
-results/tables/model_comparison_summary.csv
-results/tables/model_comparison_first_alarm.csv
-results/tables/model_comparison_oof_predictions.csv
-results/tables/model_early_warning_metrics.csv
-```
+    results/tables/model_comparison_summary.csv
+    results/tables/model_comparison_first_alarm.csv
+    results/tables/model_comparison_oof_predictions.csv
+    results/tables/model_early_warning_metrics.csv
 
 ---
 
 ## 10. Threshold Engineering
 
-AI Risk가 어느 수준일 때 실제 경고를 발생시킬 것인지 결정하기 위해 Threshold Sensitivity Analysis를 수행했습니다.
+AI Risk가 어느 수준일 때 실제 경고를 발생시킬 것인지 결정하기 위해  
+Threshold Sensitivity Analysis를 수행했습니다.
 
 | Threshold | Recall | False Alarm Rate | F1 Score | First SPC Alarm |
 |---:|---:|---:|---:|---:|
@@ -371,10 +334,8 @@ Threshold를 높일수록 False Alarm은 감소하지만 Recall도 감소했습�
 
 특히 `0.50 → 0.60`에서는
 
-```text
-First Alarm Recall : 5/8 → 5/8
-False Alarm Rate   : 30% → 25%
-```
+    First Alarm Recall : 5/8 → 5/8
+    False Alarm Rate   : 30% → 25%
 
 으로 조기경고 성능을 유지하면서 오경보를 감소시킬 수 있었습니다.
 
@@ -384,11 +345,9 @@ False Alarm Rate   : 30% → 25%
 
 ### Related Results
 
-```text
-results/tables/final_threshold_analysis.csv
-results/tables/final_evaluation_metrics.csv
-results/tables/final_first_alarm_performance.csv
-```
+    results/tables/final_threshold_analysis.csv
+    results/tables/final_evaluation_metrics.csv
+    results/tables/final_first_alarm_performance.csv
 
 ---
 
@@ -400,20 +359,18 @@ AI가 단순히 Risk Score만 제공하면 엔지니어가 실제 공정 점검�
 
 ### Example
 
-```text
-Lot 3
-Current Wafer : W6
-Next Wafer    : W7
+    Lot 3
+    Current Wafer : W6
+    Next Wafer    : W7
 
-AI Risk
-73%
+    AI Risk
+    73%
 
-Top Process Signal #1
-Helium BP Flow (Mean)
+    Top Process Signal #1
+    Helium BP Flow (Mean)
 
-Top Process Signal #2
-Platen RF Reflected Power (Variation)
-```
+    Top Process Signal #2
+    Platen RF Reflected Power (Variation)
 
 SHAP 분석에서 다음과 같은 공정 관련 변수들이 여러 LOLO Fold에서 반복적으로 선택되었습니다.
 
@@ -434,14 +391,12 @@ SHAP 분석에서 다음과 같은 공정 관련 변수들이 여러 LOLO Fold�
 
 ### Related Results
 
-```text
-results/tables/shap_global_importance.csv
-results/tables/shap_process_importance.csv
-results/tables/shap_process_interpretation.csv
-results/tables/shap_process_risk_direction.csv
-results/tables/shap_first_alarm_case_contributors.csv
-results/tables/shap_successful_warning_process.csv
-```
+    results/tables/shap_global_importance.csv
+    results/tables/shap_process_importance.csv
+    results/tables/shap_process_interpretation.csv
+    results/tables/shap_process_risk_direction.csv
+    results/tables/shap_first_alarm_case_contributors.csv
+    results/tables/shap_successful_warning_process.csv
 
 ---
 
@@ -476,48 +431,44 @@ results/tables/shap_successful_warning_process.csv
 
 ### Run Dashboard
 
-```bash
-pip install -r requirements.txt
-streamlit run 16_streamlit_dashboard.py
-```
+    pip install -r requirements.txt
+    streamlit run 16_streamlit_dashboard.py
 
 ---
 
 ## 13. Repository Structure
 
-```text
-core-ai-spc-dashboard/
-│
-├── data/
-│   └── processed/
-│       ├── next_wafer_dataset.csv
-│       ├── process_etch_matching.csv
-│       ├── process_feature_list.csv
-│       ├── process_features_clean.csv
-│       ├── process_features_full.csv
-│       ├── process_only_wafers.csv
-│       ├── wafer_process_selected.csv
-│       ├── wafer_process_table.csv
-│       └── wafer_table.csv
-│
-├── results/
-│   └── tables/
-│       ├── drift_ancova.csv
-│       ├── drift_lot_regression.csv
-│       ├── spc_baseline_comparison.csv
-│       ├── shewhart_spc_detail.csv
-│       ├── model_comparison_summary.csv
-│       ├── model_lolo_overall_metrics.csv
-│       ├── final_threshold_analysis.csv
-│       ├── final_first_alarm_performance.csv
-│       ├── shap_global_importance.csv
-│       ├── shap_process_importance.csv
-│       └── ...
-│
-├── 16_streamlit_dashboard.py
-├── requirements.txt
-└── README.md
-```
+    core-ai-spc-dashboard/
+    │
+    ├── data/
+    │   └── processed/
+    │       ├── next_wafer_dataset.csv
+    │       ├── process_etch_matching.csv
+    │       ├── process_feature_list.csv
+    │       ├── process_features_clean.csv
+    │       ├── process_features_full.csv
+    │       ├── process_only_wafers.csv
+    │       ├── wafer_process_selected.csv
+    │       ├── wafer_process_table.csv
+    │       └── wafer_table.csv
+    │
+    ├── results/
+    │   └── tables/
+    │       ├── drift_ancova.csv
+    │       ├── drift_lot_regression.csv
+    │       ├── spc_baseline_comparison.csv
+    │       ├── shewhart_spc_detail.csv
+    │       ├── model_comparison_summary.csv
+    │       ├── model_lolo_overall_metrics.csv
+    │       ├── final_threshold_analysis.csv
+    │       ├── final_first_alarm_performance.csv
+    │       ├── shap_global_importance.csv
+    │       ├── shap_process_importance.csv
+    │       └── ...
+    │
+    ├── 16_streamlit_dashboard.py
+    ├── requirements.txt
+    └── README.md
 
 `results/tables/`에는 분석 과정에서 생성된 SPC, Drift, LOLO Validation, Model Comparison, Threshold 및 SHAP 결과를 저장했습니다.
 
@@ -600,29 +551,27 @@ SHAP을 통해 AI의 판단 근거를 제공하되,
 
 ## 17. Future Work
 
-```text
-Process Tool
-     │
-     ▼
-Real-Time Sensor Streaming
-     │
-     ▼
-Wafer Feature Aggregation
-     │
-     ├──────────────┐
-     ▼              ▼
-Real-Time SPC    AI Prediction
-     │              │
-     └──────┬───────┘
-            ▼
-       Early Warning
-            │
-            ▼
-       SHAP Evidence
-            │
-            ▼
-      Engineer Review
-```
+    Process Tool
+         │
+         ▼
+    Real-Time Sensor Streaming
+         │
+         ▼
+    Wafer Feature Aggregation
+         │
+         ├──────────────┐
+         ▼              ▼
+    Real-Time SPC    AI Prediction
+         │              │
+         └──────┬───────┘
+                ▼
+           Early Warning
+                │
+                ▼
+           SHAP Evidence
+                │
+                ▼
+          Engineer Review
 
 궁극적으로는 SPC가 현재 공정 상태를 판단하고 AI가 미래 위험을 예측하는  
 **SPC-AI Collaborative Process Monitoring System**으로 확장하는 것이 목표입니다.
@@ -660,38 +609,36 @@ SPC 기반 이상 기준과 AI 기반 Next-Wafer Prediction을 결합하여
 
 ### Final Result
 
-```text
-10 / 10 Lots
-Etch Depth Decreasing Trend
+    10 / 10 Lots
+    Etch Depth Decreasing Trend
 
-        ↓
+            ↓
 
-SPC Baseline
-W1-W3 / ±3σ
+    SPC Baseline
+    W1-W3 / ±3σ
 
-        ↓
+            ↓
 
-LOLO Validation
+    LOLO Validation
 
-        ↓
+            ↓
 
-XGBoost Next-Wafer Prediction
+    XGBoost Next-Wafer Prediction
 
-        ↓
+            ↓
 
-5 / 8 First SPC Alarms
-Predicted 1 Wafer Earlier
+    5 / 8 First SPC Alarms
+    Predicted 1 Wafer Earlier
 
-        ↓
+            ↓
 
-Threshold 0.60
-False Alarm Rate 25%
+    Threshold 0.60
+    False Alarm Rate 25%
 
-        ↓
+            ↓
 
-SHAP-based
-Engineer Decision Support
-```
+    SHAP-based
+    Engineer Decision Support
 
 ---
 
