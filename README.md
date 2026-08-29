@@ -3,28 +3,19 @@ AI-SPC early warning dashboard for semiconductor etching process monitoring
 
 # AI-SPC Early Warning for Semiconductor Etch Process Drift
 
-
-<p align="center">
-
-![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white)
-![XGBoost](https://img.shields.io/badge/XGBoost-Next--Wafer%20Prediction-EC6B23)
-![SHAP](https://img.shields.io/badge/SHAP-Explainable%20AI-2EA44F)
-![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?logo=streamlit&logoColor=white)
-![LOLO](https://img.shields.io/badge/Validation-Leave--One--Lot--Out-6F42C1)
-
-</p>
-
 <p align="center">
   <a href="https://core-ai-spc-dashboard-kyfg6yxrrfjntwabxcfqqf.streamlit.app/">
     <img src="https://img.shields.io/badge/▶%20Live%20Dashboard-Open-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white">
   </a>
-  &nbsp;
-  <a href="https://seoyuri0921-hub.github.io/AI-SPC-Process-Monitor/">
-    <img src="https://img.shields.io/badge/Process%20Monitor-View-1F6FEB?style=for-the-badge&logo=github">
-  </a>
+</p>
+
+<p align="center">
+  <sub>※ Streamlit Community Cloud may require a short wake-up time after inactivity.</sub>
 </p>
 
 ---
+
+## Dashboard Preview
 
 ## Dashboard Preview
 
@@ -36,7 +27,6 @@ AI-SPC early warning dashboard for semiconductor etching process monitoring
   <b>Lot 3 | Current W6 → Next W7</b><br>
   Current SPC: NORMAL → AI Risk: 73% → EARLY WARNING → Actual W7 SPC Alarm
 </p>
-
 ---
 
 ## Key Results
